@@ -5,14 +5,19 @@ jobs:
   android:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: denoland/setup-deno@v2
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: 25.6.0
 
       - name: Install Dependencies
-        run: deno install
+        run: npm install
 
       - name: Run 'expo prebuild'
-        run: deno -A npm:expo prebuild -p android
+        run: npx expo prebuild -p android
 
       - name: Build Android Release
         run: cd android && ./gradlew assembleRelease
@@ -26,14 +31,19 @@ jobs:
   ios:
     runs-on: macos-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: denoland/setup-deno@v2
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: 25.6.0
 
       - name: Install Dependencies
-        run: deno install
+        run: npm install
 
       - name: Run 'expo prebuild'
-        run: denp -A npm:expo prebuild -p ios
+        run: npx expo prebuild -p ios
 
       - name: Install CocoaPods
         run: cd ios && pod install
