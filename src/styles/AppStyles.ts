@@ -52,10 +52,31 @@ export const styles = StyleSheet.create({
   resultButtonDisabled: {
     opacity: 0.5,
   },
+  resultButtonSelected: {
+    backgroundColor: '#d0e8ff',
+    borderWidth: 2,
+    borderColor: '#007AFF',
+  },
   resultContent: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
+  },
+  selectionCheckbox: {
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    borderWidth: 2,
+    borderColor: '#007AFF',
+    marginRight: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#fff',
+  },
+  selectionCheckmark: {
+    fontSize: 14,
+    color: '#007AFF',
+    fontWeight: 'bold',
   },
   resultTextGroup: {
     flex: 1,
@@ -83,5 +104,38 @@ export const styles = StyleSheet.create({
     marginTop: 20,
     fontSize: 16,
     color: '#999',
+  },
+  selectionToolbar: {
+    flexDirection: 'row',
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    backgroundColor: '#f8f8f8',
+    borderTopWidth: 1,
+    borderTopColor: '#ddd',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  selectionToolbarText: {
+    fontSize: 14,
+    color: '#333',
+    fontWeight: '600',
+  },
+  selectionToolbarButtons: {
+    flexDirection: 'row',
+    gap: 12,
+  },
+  toolbarButton: {
+    paddingVertical: 8,
+    paddingHorizontal: 16,
+    borderRadius: 6,
+    backgroundColor: '#007AFF',
+  },
+  toolbarButtonSecondary: {
+    backgroundColor: '#666',
+  },
+  toolbarButtonText: {
+    color: '#fff',
+    fontSize: 14,
+    fontWeight: '600',
   },
 });

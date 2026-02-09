@@ -18,3 +18,8 @@ export interface DownloadJobItem {
   status: 'QUEUED' | 'IN_PROGRESS';
   percentDone?: number;
 }
+
+export interface SelectionState {
+  isSelectionMode: boolean;
+  selectedIds: Set<string>;
+}

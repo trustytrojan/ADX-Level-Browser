@@ -1,14 +1,52 @@
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Alert } from 'react-native';
 import type { SongItem, DownloadState, DownloadJobItem } from '../types';
 import { getFileForSong } from '../utils/fileSystem';
 import { openWithAstroDX } from '../utils/sharing';
 import { ExportJob, fetchFolderName } from '../services/gdrive';
+import {
+  showDownloadProgressNotification,
+  updateDownloadProgressNotification,
+  dismissDownloadProgressNotification,
+} from '../utils/notifications';
 
 export const useDownload = () => {
   const [downloading, setDownloading] = useState<DownloadState>({});
   const [downloadJobs, setDownloadJobs] = useState<DownloadJobItem[]>([]);
   const [downloadedMap, setDownloadedMap] = useState<Record<string, boolean>>({});
+  const progressNotificationId = useRef<string | null>(null);
+  const totalDownloadsRef = useRef<number>(0);
+  const completedDownloadsRef = useRef<number>(0);
+
+  // Update progress notification when download jobs change
+  useEffect(() => {
+    const updateProgressNotification = async () => {
+      if (downloadJobs.length > 0) {
+        const completed = completedDownloadsRef.current;
+        const total = totalDownloadsRef.current;
+        
+        if (progressNotificationId.current) {
+          const newId = await updateDownloadProgressNotification(
+            progressNotificationId.current,
+            completed,
+            total
+          );
+          progressNotificationId.current = newId;
+        } else {
+          const newId = await showDownloadProgressNotification(completed, total);
+          progressNotificationId.current = newId;
+        }
+      } else if (progressNotificationId.current) {
+        // All downloads complete
+        await dismissDownloadProgressNotification(progressNotificationId.current);
+        progressNotificationId.current = null;
+        totalDownloadsRef.current = 0;
+        completedDownloadsRef.current = 0;
+      }
+    };
+
+    updateProgressNotification();
+  }, [downloadJobs.length]);
 
   const handleSongPress = async (item: SongItem) => {
     setDownloading((prev) => ({ ...prev, [item.folderId]: true }));
@@ -76,6 +114,7 @@ export const useDownload = () => {
         throw fetchError;
       } finally {
         setDownloadJobs((prev) => prev.filter((entry) => entry.folderId !== item.folderId));
+        completedDownloadsRef.current += 1;
       }
     } catch (error) {
       console.error('Error:', error);
@@ -92,11 +131,31 @@ export const useDownload = () => {
     }
   };
 
+  const handleBatchDownload = async (items: SongItem[]) => {
+    // Filter out already downloaded songs
+    const itemsToDownload = items.filter((item) => {
+      const file = getFileForSong(item);
+      return !file.exists;
+    });
+
+    if (itemsToDownload.length === 0) {
+      Alert.alert('Already Downloaded', 'All selected songs are already downloaded.');
+      return;
+    }
+
+    // Initialize counters
+    totalDownloadsRef.current = itemsToDownload.length;
+    completedDownloadsRef.current = 0;
+
+	itemsToDownload.forEach(handleSongPress);
+  };
+
   return {
     downloading,
     downloadJobs,
     downloadedMap,
     handleSongPress,
+    handleBatchDownload,
     setDownloadedMap,
   };
 };

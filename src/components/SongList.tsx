@@ -9,7 +9,10 @@ interface SongListProps {
   songs: SongItem[];
   downloading: DownloadState;
   downloadedMap: Record<string, boolean>;
+  isSelectionMode: boolean;
+  isSelected: (id: string) => boolean;
   onSongPress: (item: SongItem) => void;
+  onSongLongPress: (item: SongItem) => void;
   setDownloadedMap: React.Dispatch<React.SetStateAction<Record<string, boolean>>>;
   searchText: string;
   loading: boolean;
@@ -19,7 +22,10 @@ export const SongList = ({
   songs,
   downloading,
   downloadedMap,
+  isSelectionMode,
+  isSelected,
   onSongPress,
+  onSongLongPress,
   setDownloadedMap,
   searchText,
   loading,
@@ -47,13 +53,16 @@ export const SongList = ({
       <FlatList
         style={styles.songsList}
         data={songs}
-        keyExtractor={(item, index) => `${item.folderId}-${index}`}
+        keyExtractor={(item) => item.folderId}
         renderItem={({ item }) => (
           <SongListItem
             item={item}
             downloading={downloading}
             downloaded={downloadedMap[item.folderId] || false}
+            isSelectionMode={isSelectionMode}
+            isSelected={isSelected(item.folderId)}
             onPress={onSongPress}
+            onLongPress={onSongLongPress}
           />
         )}
         ListEmptyComponent={
