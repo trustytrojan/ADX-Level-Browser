@@ -3,7 +3,7 @@ import { StyleSheet } from 'react-native';
 export const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#fff',
+    backgroundColor: '#0f1115',
     paddingTop: 40,
   },
   searchContainer: {
@@ -12,11 +12,13 @@ export const styles = StyleSheet.create({
   },
   searchBar: {
     borderWidth: 1,
-    borderColor: '#ccc',
+    borderColor: '#2a2f3a',
     borderRadius: 8,
     paddingHorizontal: 12,
     paddingVertical: 10,
     fontSize: 16,
+    color: '#e6e6e6',
+    backgroundColor: '#151821',
   },
   loadingContainer: {
     padding: 20,
@@ -27,7 +29,7 @@ export const styles = StyleSheet.create({
     marginBottom: 6,
     paddingHorizontal: 16,
     fontSize: 12,
-    color: '#666',
+    color: '#9aa3b2',
     textTransform: 'uppercase',
     letterSpacing: 0.5,
   },
@@ -46,14 +48,14 @@ export const styles = StyleSheet.create({
     paddingVertical: 12,
     paddingHorizontal: 16,
     marginBottom: 8,
-    backgroundColor: '#f0f0f0',
+    backgroundColor: '#1b1f2a',
     borderRadius: 6,
   },
   resultButtonDisabled: {
     opacity: 0.5,
   },
   resultButtonSelected: {
-    backgroundColor: '#d0e8ff',
+    backgroundColor: '#1b2a3f',
     borderWidth: 2,
     borderColor: '#007AFF',
   },
@@ -71,7 +73,7 @@ export const styles = StyleSheet.create({
     marginRight: 12,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: '#fff',
+    backgroundColor: '#0f1115',
   },
   selectionCheckmark: {
     fontSize: 14,
@@ -84,12 +86,12 @@ export const styles = StyleSheet.create({
   },
   resultText: {
     fontSize: 16,
-    color: '#333',
+    color: '#e6e6e6',
   },
   resultSubtext: {
     marginTop: 2,
     fontSize: 12,
-    color: '#666',
+    color: '#9aa3b2',
   },
   downloadIndicator: {
     marginLeft: 8,
@@ -97,27 +99,27 @@ export const styles = StyleSheet.create({
   downloadedCheck: {
     marginLeft: 8,
     fontSize: 16,
-    color: '#2e7d32',
+    color: '#4caf50',
   },
   emptyText: {
     textAlign: 'center',
     marginTop: 20,
     fontSize: 16,
-    color: '#999',
+    color: '#9aa3b2',
   },
   selectionToolbar: {
     flexDirection: 'row',
     paddingHorizontal: 16,
     paddingVertical: 12,
-    backgroundColor: '#f8f8f8',
+    backgroundColor: '#151821',
     borderTopWidth: 1,
-    borderTopColor: '#ddd',
+    borderTopColor: '#2a2f3a',
     alignItems: 'center',
     justifyContent: 'space-between',
   },
   selectionToolbarText: {
     fontSize: 14,
-    color: '#333',
+    color: '#e6e6e6',
     fontWeight: '600',
   },
   selectionToolbarButtons: {

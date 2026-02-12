@@ -4,7 +4,6 @@ import { getContentUriAsync } from 'expo-file-system/legacy';
 import * as Sharing from 'expo-sharing';
 import * as IntentLauncher from 'expo-intent-launcher';
 import { zip, unzip } from 'react-native-zip-archive';
-import { showDownloadCompleteNotification } from './notifications';
 
 // Track if an intent is currently active
 let isIntentActive = false;
@@ -13,9 +12,8 @@ export const openWithAstroDX = async (file: File, songTitle: string): Promise<vo
   const appState = AppState.currentState;
   const isAppInBackground = appState !== 'active';
 
-  // If app is in background or an intent is already active, just show notification
+  // If app is in background or an intent is already active, do nothing
   if (isAppInBackground || isIntentActive) {
-    await showDownloadCompleteNotification(songTitle);
     return;
   }
 
@@ -40,7 +38,6 @@ export const openWithAstroDX = async (file: File, songTitle: string): Promise<vo
       // Check if it's the "already started" error
       const errorMessage = error instanceof Error ? error.message : '';
       if (errorMessage.includes('already started')) {
-        await showDownloadCompleteNotification(songTitle);
         return;
       }
       

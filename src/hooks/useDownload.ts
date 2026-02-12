@@ -1,55 +1,18 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useRef } from 'react';
 import { Alert } from 'react-native';
 import type { SongItem, DownloadState, DownloadJobItem } from '../types';
 import { getFileForSong } from '../utils/fileSystem';
 import { openWithAstroDX, openMultipleWithAstroDX } from '../utils/sharing';
 import { ExportJob, fetchFolderName } from '../services/gdrive';
-import {
-  showDownloadProgressNotification,
-  updateDownloadProgressNotification,
-  dismissDownloadProgressNotification,
-} from '../utils/notifications';
 
 export const useDownload = () => {
   const [downloading, setDownloading] = useState<DownloadState>({});
   const [downloadJobs, setDownloadJobs] = useState<DownloadJobItem[]>([]);
   const [downloadedMap, setDownloadedMap] = useState<Record<string, boolean>>({});
-  const progressNotificationId = useRef<string | null>(null);
   const totalDownloadsRef = useRef<number>(0);
   const completedDownloadsRef = useRef<number>(0);
   const batchCompletedFilesRef = useRef<Array<{ file: any; title: string }>>([]);
   const shouldClearOnNextActiveRef = useRef<boolean>(false);
-
-  // Update progress notification when download jobs change
-  useEffect(() => {
-    const updateProgressNotification = async () => {
-      const activeJobs = downloadJobs.filter((job) => job.status !== 'COMPLETED');
-      if (activeJobs.length > 0) {
-        const completed = completedDownloadsRef.current;
-        const total = totalDownloadsRef.current;
-
-        if (progressNotificationId.current) {
-          const newId = await updateDownloadProgressNotification(
-            progressNotificationId.current,
-            completed,
-            total
-          );
-          progressNotificationId.current = newId;
-        } else {
-          const newId = await showDownloadProgressNotification(completed, total);
-          progressNotificationId.current = newId;
-        }
-      } else if (progressNotificationId.current) {
-        // All downloads complete
-        await dismissDownloadProgressNotification(progressNotificationId.current);
-        progressNotificationId.current = null;
-        totalDownloadsRef.current = 0;
-        completedDownloadsRef.current = 0;
-      }
-    };
-
-    updateProgressNotification();
-  }, [downloadJobs]);
 
   const handleSongPress = async (item: SongItem) => {
     const file = getFileForSong(item);
@@ -167,6 +130,7 @@ export const useDownload = () => {
             if (!hasOtherDownloads) {
               // All downloads complete - open all accumulated files
               const files = batchCompletedFilesRef.current.map(f => f.file);
+              const totalCompleted = batchCompletedFilesRef.current.length;
               if (files.length === 1) {
                 openWithAstroDX(files[0], batchCompletedFilesRef.current[0].title).catch(console.error);
               } else if (files.length > 1) {

@@ -11,7 +11,6 @@ import { useSearch } from './hooks/useSearch';
 import { useDownload } from './hooks/useDownload';
 import { useSelection } from './hooks/useSelection';
 import { resetIntentLock } from './utils/sharing';
-import { setupNotifications } from './utils/notifications';
 import { styles } from './styles/AppStyles';
 
 // Deduplicate songs by folderId (keep first occurrence)
@@ -47,10 +46,8 @@ export default function App() {
     getSelectedIds,
   } = useSelection();
 
-  // Setup notifications and app state tracking
+  // App state tracking
   useEffect(() => {
-    setupNotifications();
-
     const subscription = AppState.addEventListener('change', (nextAppState) => {
       if (nextAppState === 'active') {
         // Reset intent lock when app comes to foreground
