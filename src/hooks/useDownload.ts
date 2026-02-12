@@ -4,6 +4,7 @@ import type { SongItem, DownloadState, DownloadJobItem } from '../types';
 import { getFileForSong } from '../utils/fileSystem';
 import { openWithAstroDX, openMultipleWithAstroDX } from '../utils/sharing';
 import { ExportJob, fetchFolderName } from '../services/gdrive';
+import { File } from 'expo-file-system';
 
 export const useDownload = () => {
   const [downloading, setDownloading] = useState<DownloadState>({});
@@ -92,25 +93,16 @@ export const useDownload = () => {
           const controller = new AbortController();
           const timeoutId = setTimeout(() => controller.abort(), 90000);
 
-          return fetch(downloadUrl, { signal: controller.signal })
-            .then(async (response) => {
-              clearTimeout(timeoutId);
+          return File.downloadFileAsync(downloadUrl, file).then(() => {
+            clearTimeout(timeoutId);
+            setDownloadedMap((prev) => ({ ...prev, [item.folderId]: true }));
 
-              if (!response.ok) {
-                throw new Error(`HTTP error! status: ${response.status}`);
-              }
-
-              const arrayBuffer = await response.arrayBuffer();
-              file.write(new Uint8Array(arrayBuffer));
-              setDownloadedMap((prev) => ({ ...prev, [item.folderId]: true }));
-
-              // Accumulate file for batch opening
-              batchCompletedFilesRef.current.push({ file, title: item.title });
-            })
-            .catch((fetchError) => {
-              clearTimeout(timeoutId);
-              throw fetchError;
-            });
+            // Accumulate file for batch opening
+            batchCompletedFilesRef.current.push({ file, title: item.title });
+          }).catch((error) => {
+            clearTimeout(timeoutId);
+            throw error;
+          });
         })
         .then(() => {
           // Download complete, check if other downloads are still active
