@@ -1,6 +1,6 @@
 {
   "expo": {
-    "name": "adx-convert-browser",
+    "name": "ADX Converts",
     "slug": "adx-convert-browser",
     "version": "1.0.0",
     "orientation": "portrait",
@@ -17,15 +17,9 @@
       "bundleIdentifier": "com.trustytrojan.adx-convert-browser"
     },
     "android": {
-      "adaptiveIcon": {
-        "foregroundImage": "./assets/adaptive-icon.png",
-        "backgroundColor": "#ffffff"
-      },
       "edgeToEdgeEnabled": true,
       "predictiveBackGestureEnabled": false,
-      "permissions": [
-        "android.permission.POST_NOTIFICATIONS"
-      ]
+      "package": "com.trustytrojan.adxconvertbrowser"
     },
     "web": {
       "favicon": "./assets/favicon.png"
