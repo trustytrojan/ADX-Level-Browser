@@ -2,12 +2,12 @@ export interface Song {
   /**
    * Google Drive folder ID.
    * If present, then `majdataId` should not be, and this song is a convert hosted
-   * in the Google Drive folder.
+   * in the [Google Drive folder](https://drive.google.com/drive/u/0/folders/1NiZ9rL19qKLqt0uNcP5tIqc0fUrksAPs).
    */
   folderId?: string;
   /**
    * Majdata song ID.
-   * If present, then `folderId` should not be, and this song is a fanmade chart hosted on Majdata.net.
+   * If present, then `folderId` should not be, and this song is a fanmade chart hosted on [Majdata.net](https://majdata.net).
    */
   majdataId?: string;
   /**
@@ -25,9 +25,17 @@ export interface Song {
    */
   romanizedArtist?: string;
   /**
-   * Also known as "aliases". Sourced from GCM-Bot.
+   * Also known as "aliases". Sourced from [GCM-Bot](https://github.com/lomotos10/GCM-bot/blob/main/data/aliases/en/maimai.tsv).
    */
   communityNames?: string[];
+  /**
+   * Chart designer name. Not present on convert songs.
+   */
+  designer?: string;
+  /**
+   * Romanized designer. Not present if `designer` does not contain Japanese characters.
+   */
+  romanizedDesigner?: string;
 }
 
 // Type alias for backwards compatibility with components

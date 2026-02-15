@@ -78,8 +78,6 @@ export const openWithAstroDX = async (file: File, songTitle: string): Promise<vo
 export const openMultipleWithAstroDX = async (files: File[]): Promise<void> => {
   if (files.length === 0) return;
 
-  console.log('[openMultipleWithAstroDX] files:', files);
-
   const appState = AppState.currentState;
   const isAppInBackground = appState !== 'active';
 
@@ -98,8 +96,6 @@ export const openMultipleWithAstroDX = async (files: File[]): Promise<void> => {
       // Zip all ADX files into one combined ADX file
       const filePaths = files.map(f => f.uri);
 
-      console.log(`[openMultipleWithAstroDX] filePaths:`, filePaths);
-
       // remove the ".adx" extension, use these as the destination directory for unzipping each adx
       const withoutExtensions: string[] = [];
 
@@ -109,21 +105,12 @@ export const openMultipleWithAstroDX = async (files: File[]): Promise<void> => {
         await unzip(uri, withoutExt);
       }
 
-      console.log(`[openMultipleWithAstroDX] withoutExtensions:`, withoutExtensions);
-
       if (combinedSongsFile.exists) {
-        console.log(`[openMultipleWithAstroDX] combinedSongFiles exists, deleting`);
         combinedSongsFile.delete();
       }
 
       // zip all the unzipped song folders into "combined-songs.adx"
       await zip(withoutExtensions, outputPath);
-
-      console.log(`[openMultipleWithAstroDX] Zipping complete, verifying zip`);
-      const fflate = await import('fflate');
-      const zipBytes = combinedSongsFile.bytesSync();
-      const unzipped = fflate.unzipSync(zipBytes);
-      console.log(`[openMultipleWithAstroDX] unzipped:`, Object.keys(unzipped));
 
       // delete all the unzipped song folders
       withoutExtensions.forEach(uri => new Directory(uri).delete());
@@ -135,17 +122,13 @@ export const openMultipleWithAstroDX = async (files: File[]): Promise<void> => {
       for (const file of files) {
         const bytes = file.bytesSync();
         const songFiles = fflate.unzipSync(bytes);
-        // console.log(Object.keys(songFiles));
-        // const nameWithoutExt = file.name.slice(0, file.name.length - 4);
         Object.assign(decompressedSongFolders, songFiles);
-        // console.log(`Decompressed ${nameWithoutExt}`);
       }
 
       // Show loading message
       Alert.alert('Please Wait', 'Compressing Songs for Bulk Import...', [], { cancelable: false });
 
       const finalAdx = fflate.zipSync(decompressedSongFolders);
-      // console.log(`Compressed final container ADX`);
 
       combinedSongsFile.write(finalAdx);
     } else {

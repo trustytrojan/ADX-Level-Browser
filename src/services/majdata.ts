@@ -16,7 +16,7 @@ export const downloadMajdataSong = async (
   const tempDir = new Directory(Paths.document, majdataId);
   tempDir.create({ intermediates: true, idempotent: true });
 
-  console.log(`[downloadMajdataSong] tempDir.uri:`, tempDir.uri);
+  // console.log(`[downloadMajdataSong] tempDir.uri:`, tempDir.uri);
 
   FileSystem.makeDirectoryAsync(`${tempDir.uri}/${songTitle}`);
   

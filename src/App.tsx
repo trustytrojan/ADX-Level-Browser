@@ -11,8 +11,8 @@ import { useDownload } from './hooks/useDownload';
 import { useSelection } from './hooks/useSelection';
 import { resetIntentLock } from './utils/sharing';
 import { styles } from './styles/AppStyles';
-import GithubIcon from '../assets/github.svg';
 import { loadSongsDatabase, refreshSongsDatabase } from './utils/songsDatabase';
+import { Entypo, Ionicons } from '@expo/vector-icons';
 
 export default function App() {
   const [showHelpModal, setShowHelpModal] = useState(false);
@@ -125,17 +125,21 @@ export default function App() {
           <View style={styles.headerRight}>
             <Pressable
               onPress={() => Linking.openURL('https://github.com/trustytrojan/adx-convert-browser')}
-              style={styles.githubButton}
               hitSlop={12}
             >
-              <GithubIcon width={24} height={24} fill="#9aa3b2" />
+              <Ionicons name="logo-github" size={24} color="#9aa3b2" />
+            </Pressable>
+            <Pressable 
+              onPress={() => {}} 
+              hitSlop={12}
+            >
+              <Ionicons name="settings-outline" size={24} color="#9aa3b2" />
             </Pressable>
             <Pressable 
               onPress={() => setShowHelpModal(true)} 
-              style={styles.helpButton}
               hitSlop={12}
             >
-              <Text style={styles.helpIcon}>?</Text>
+              <Entypo name="help-with-circle" size={24} color="#9aa3b2" />
             </Pressable>
           </View>
         </View>
@@ -155,7 +159,10 @@ export default function App() {
 
       {dbError && (
         <View style={styles.loadingContainer}>
-          <Text style={styles.errorText}>❌ {dbError}</Text>
+          <View style={styles.errorContainer}>
+            <Ionicons name="close-circle" size={24} color="#ff6b6b" style={styles.errorIcon} />
+            <Text style={styles.errorText}>{dbError}</Text>
+          </View>
           <Text style={styles.errorSubtext}>Please check your connection and restart the app</Text>
         </View>
       )}
@@ -204,10 +211,11 @@ export default function App() {
               This is a helper application for downloading and importing ADX files to AstroDX.{'\n'}
               Here's how to use the app:{'\n'}
               - Pull down on the song list to refresh the database.{'\n'}
+              - Button colors: Converts are dark gray; Majdata songs are blue.{'\n'}
               - Filter by song title/artist with the search bar.{'\n'}
               - Tap a song to start downloading it.{'\n'}
-              - You can add multiple songs to the download list. Once all songs in the list complete, they will all be imported into AstroDX at the same time!{'\n'}
-              - If a song has a <Text style={styles.downloadedCheck}>✓</Text>, it is already downloaded inside this app. Tap on it to immediately import to AstroDX.{'\n'}
+              - You can download multiple songs simultaneously. Once all downloads complete, all songs will be imported into AstroDX at once!{'\n'}
+              - If a song has a <Ionicons name="checkmark-circle" size={20} color="#4caf50" />, it is already downloaded inside this app. Tap on it to immediately import to AstroDX.{'\n'}
               - You can press and hold on a song to enter multi-select mode, which lets you perform the above actions on multiple songs.
             </Text>
             <Pressable

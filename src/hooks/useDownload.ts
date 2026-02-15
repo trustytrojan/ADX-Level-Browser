@@ -64,7 +64,7 @@ export const useDownload = () => {
 
   const addCompletedFile = (file: File, title: string) => {
     batchCompletedFilesRef.current.push({ file, title });
-    console.log(`[downloadSingleSong] Added to batch, batch count=${batchCompletedFilesRef.current.length}`);
+    // console.log(`[downloadSingleSong] Added to batch, batch count=${batchCompletedFilesRef.current.length}`);
   };
 
   const startGoogleDriveDownload = (
@@ -72,7 +72,7 @@ export const useDownload = () => {
     songId: string,
     file: File,
   ) => {
-    console.log(`[downloadSingleSong] Starting Google Drive download for ${item.title}`);
+    // console.log(`[downloadSingleSong] Starting Google Drive download for ${item.title}`);
     ExportJob.create(item.folderId!, item.zetarakuId || item.folderId!)
       .then((job) => {
         return job
@@ -91,12 +91,12 @@ export const useDownload = () => {
             const downloadUrl = job.archives[0].storagePath;
             const timeoutId = getDownloadTimeout();
             const fileUri = `${Paths.document.uri}adx-downloads/${file.name}`;
-            console.log(`[downloadSingleSong] Downloading Google Drive file for ${item.title}`);
+            // console.log(`[downloadSingleSong] Downloading Google Drive file for ${item.title}`);
 
             return FileSystem.downloadAsync(downloadUrl, fileUri)
               .then(() => {
                 clearTimeout(timeoutId);
-                console.log(`[downloadSingleSong] Google Drive download completed for ${item.title}`);
+                // console.log(`[downloadSingleSong] Google Drive download completed for ${item.title}`);
                 setDownloadedMap((prev) => ({ ...prev, [songId]: true }));
                 addCompletedFile(file, item.title);
               })
@@ -126,13 +126,13 @@ export const useDownload = () => {
     const file = getFileForSong(item);
     const songId = getSongId(item);
     const isMajdata = isMajdataSong(item);
-    console.log(`[downloadSingleSong] Starting for ${item.title} (${songId}), isMajdata=${isMajdata}`);
+    // console.log(`[downloadSingleSong] Starting for ${item.title} (${songId}), isMajdata=${isMajdata}`);
 
     addDownloadJobIfMissing(songId, item);
 
     try {
       if (isMajdata) {
-        console.log(`[downloadSingleSong] Starting majdata download for ${item.title}`);
+        // console.log(`[downloadSingleSong] Starting majdata download for ${item.title}`);
         const timeoutId = getDownloadTimeout();
 
         try {
@@ -141,7 +141,7 @@ export const useDownload = () => {
           await downloadMajdataSong(item.majdataId!, item.title, file);
 
           clearTimeout(timeoutId);
-          console.log(`[downloadSingleSong] Majdata download completed for ${item.title}`);
+          // console.log(`[downloadSingleSong] Majdata download completed for ${item.title}`);
           setDownloadedMap((prev) => ({ ...prev, [songId]: true }));
           addCompletedFile(file, item.title);
         } catch (error) {
@@ -179,9 +179,6 @@ export const useDownload = () => {
       }
     });
 
-    console.log(`[handleDownloads] itemsToDownload:`, itemsToDownload);
-    console.log(`[handleDownloads] alreadyDownloaded:`, alreadyDownloaded);
-
     // Send already downloaded files (don't await - let it run in background)
     if (alreadyDownloaded.length > 0) {
       const files = alreadyDownloaded.map(getFileForSong);
@@ -211,7 +208,7 @@ export const useDownload = () => {
 
   const handleDownloadComplete = (songId: string) => {
     completedDownloadsRef.current += 1;
-    console.log(`[handleDownloadComplete] Completed=${completedDownloadsRef.current}, Total=${totalDownloadsRef.current}, songId=${songId}`);
+    // console.log(`[handleDownloadComplete] Completed=${completedDownloadsRef.current}, Total=${totalDownloadsRef.current}, songId=${songId}`);
     setDownloadJobs((prev) =>
       prev.map((entry) =>
         entry.id === songId
@@ -225,18 +222,18 @@ export const useDownload = () => {
       // All downloads complete - open all accumulated files
       const files = batchCompletedFilesRef.current.map(f => f.file);
       const batchTitles = batchCompletedFilesRef.current.map(f => f.title);
-      console.log(`[handleDownloadComplete] All downloads complete! Opening ${files.length} files`);
-      console.log(`[handleDownloadComplete] Batch contains: ${batchTitles.join(', ')}`);
+      // console.log(`[handleDownloadComplete] All downloads complete! Opening ${files.length} files`);
+      // console.log(`[handleDownloadComplete] Batch contains: ${batchTitles.join(', ')}`);
       
       // Snapshot the batch before clearing to prevent interference from new downloads
       const filesToOpen = [...files];
       const titlesToOpen = [...batchTitles];
       
       if (filesToOpen.length === 1) {
-        console.log(`[handleDownloadComplete] Opening single file: ${titlesToOpen[0]}`);
+        // console.log(`[handleDownloadComplete] Opening single file: ${titlesToOpen[0]}`);
         openWithAstroDX(filesToOpen[0], titlesToOpen[0]).catch(console.error);
       } else if (filesToOpen.length > 1) {
-        console.log(`[handleDownloadComplete] Opening ${filesToOpen.length} files with openMultipleWithAstroDX`);
+        // console.log(`[handleDownloadComplete] Opening ${filesToOpen.length} files with openMultipleWithAstroDX`);
         openMultipleWithAstroDX(filesToOpen).catch(console.error);
       } else {
         console.log(`[handleDownloadComplete] WARNING: No files to open despite completion!`);
@@ -250,7 +247,7 @@ export const useDownload = () => {
         shouldClearOnNextActiveRef.current = true;
       }
     } else {
-      console.log(`[handleDownloadComplete] Still waiting for ${totalDownloadsRef.current - completedDownloadsRef.current} more download(s)`);
+      // console.log(`[handleDownloadComplete] Still waiting for ${totalDownloadsRef.current - completedDownloadsRef.current} more download(s)`);
     }
   };
 

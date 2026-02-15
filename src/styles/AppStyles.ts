@@ -32,17 +32,8 @@ export const styles = StyleSheet.create({
     alignItems: 'center',
   },
   helpButton: {
-    width: 21,
-    height: 21,
-    borderRadius: 13,
-    backgroundColor: '#9aa3b2',
     justifyContent: 'center',
     alignItems: 'center',
-  },
-  helpIcon: {
-    fontSize: 16,
-    color: '#0f1115',
-    fontWeight: '600',
   },
   searchContainer: {
     paddingHorizontal: 16,
@@ -66,11 +57,19 @@ export const styles = StyleSheet.create({
     fontSize: 14,
     color: '#9aa3b2',
   },
+  errorContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 8,
+  },
+  errorIcon: {
+    marginRight: 8,
+  },
   errorText: {
     fontSize: 16,
     color: '#ff6b6b',
     textAlign: 'center',
-    marginBottom: 8,
   },
   errorSubtext: {
     fontSize: 12,
@@ -105,7 +104,7 @@ export const styles = StyleSheet.create({
     borderRadius: 6,
   },
   resultButtonMajdata: {
-    backgroundColor: '#1b2534',
+    backgroundColor: '#152846',
   },
   resultButtonDisabled: {
     opacity: 0.5,
@@ -131,11 +130,6 @@ export const styles = StyleSheet.create({
     justifyContent: 'center',
     backgroundColor: '#0f1115',
   },
-  selectionCheckmark: {
-    fontSize: 14,
-    color: '#007AFF',
-    fontWeight: 'bold',
-  },
   resultTextGroup: {
     flex: 1,
     paddingRight: 8,
@@ -151,11 +145,6 @@ export const styles = StyleSheet.create({
   },
   downloadIndicator: {
     marginLeft: 8,
-  },
-  downloadedCheck: {
-    marginLeft: 8,
-    fontSize: 16,
-    color: '#4caf50',
   },
   emptyText: {
     textAlign: 'center',

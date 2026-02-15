@@ -1,4 +1,5 @@
 import { Text, View, TouchableOpacity, ActivityIndicator } from 'react-native';
+import Ionicons from '@expo/vector-icons/Ionicons';
 import type { SongItem, DownloadState } from '../types';
 import { isMajdataSong } from '../utils/fileSystem';
 import { styles } from '../styles/AppStyles';
@@ -41,17 +42,17 @@ export const SongListItem = ({
       <View style={styles.resultContent}>
         {isSelectionMode && (
           <View style={styles.selectionCheckbox}>
-            {isSelected && <Text style={styles.selectionCheckmark}>✓</Text>}
+            {isSelected && <Ionicons name="checkmark" size={18} color="#007AFF" />}
           </View>
         )}
         <View style={styles.resultTextGroup}>
           <Text style={styles.resultText}>{item.title}</Text>
-          <Text style={styles.resultSubtext}>{item.artist}</Text>
+          <Text style={styles.resultSubtext}>{item.artist}{isMajdata ? `\nDesigned by: ${item.designer}` : ''}</Text>
         </View>
         {isDownloading
           ? <ActivityIndicator size="small" color="#007AFF" style={styles.downloadIndicator} />
           : downloaded
-            ? <Text style={styles.downloadedCheck}>✓</Text>
+            ? <Ionicons name="checkmark-circle" size={20} color="#4caf50" />
             : null}
       </View>
     </TouchableOpacity>
