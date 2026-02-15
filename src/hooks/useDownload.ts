@@ -1,23 +1,117 @@
 import { useState, useRef } from 'react';
 import { Alert } from 'react-native';
 import * as FileSystem from 'expo-file-system/legacy';
-import { Paths } from 'expo-file-system';
+import { File, Paths } from 'expo-file-system';
 import type { SongItem, DownloadState, DownloadJobItem } from '../types';
 import { getFileForSong, isMajdataSong } from '../utils/fileSystem';
 import { openWithAstroDX, openMultipleWithAstroDX } from '../utils/sharing';
-import { ExportJob, fetchFolderName } from '../services/gdrive';
+import { ExportJob } from '../services/gdrive';
 import { downloadMajdataSong } from '../services/majdata';
+
+const DOWNLOAD_TIMEOUT_MS = 90000;
+const DOWNLOAD_TIMEOUT_MESSAGE = 'Download timed out (90s limit)';
+
+type CompletedFileItem = {
+  file: File;
+  title: string;
+};
 
 export const useDownload = () => {
   const [downloadJobs, setDownloadJobs] = useState<DownloadJobItem[]>([]);
   const [downloadedMap, setDownloadedMap] = useState<Record<string, boolean>>({});
   const totalDownloadsRef = useRef<number>(0);
   const completedDownloadsRef = useRef<number>(0);
-  const batchCompletedFilesRef = useRef<Array<{ file: any; title: string }>>([]);
+  const batchCompletedFilesRef = useRef<CompletedFileItem[]>([]);
   const shouldClearOnNextActiveRef = useRef<boolean>(false);
 
   const getSongId = (item: SongItem): string => {
     return item.folderId || item.majdataId || '';
+  };
+
+  const getDownloadTimeout = () => {
+    return setTimeout(() => {
+      throw new Error(DOWNLOAD_TIMEOUT_MESSAGE);
+    }, DOWNLOAD_TIMEOUT_MS);
+  };
+
+  const addDownloadJobIfMissing = (songId: string, item: SongItem) => {
+    setDownloadJobs((prev) => {
+      const exists = prev.some((job) => job.id === songId);
+      if (exists) {
+        return prev;
+      }
+
+      return [
+        ...prev,
+        {
+          id: songId,
+          title: item.title,
+          artist: item.artist,
+          status: 'QUEUED',
+        },
+      ];
+    });
+  };
+
+  const updateDownloadJob = (
+    songId: string,
+    updater: (entry: DownloadJobItem) => DownloadJobItem
+  ) => {
+    setDownloadJobs((prev) =>
+      prev.map((entry) => (entry.id === songId ? updater(entry) : entry))
+    );
+  };
+
+  const addCompletedFile = (file: File, title: string) => {
+    batchCompletedFilesRef.current.push({ file, title });
+    console.log(`[downloadSingleSong] Added to batch, batch count=${batchCompletedFilesRef.current.length}`);
+  };
+
+  const startGoogleDriveDownload = (
+    item: SongItem,
+    songId: string,
+    file: File,
+  ) => {
+    console.log(`[downloadSingleSong] Starting Google Drive download for ${item.title}`);
+    ExportJob.create(item.folderId!, item.zetarakuId || item.folderId!)
+      .then((job) => {
+        return job
+          .waitForSuccess((status, percentDone) => {
+            updateDownloadJob(songId, (entry) => ({
+              ...entry,
+              status: status === 'IN_PROGRESS' ? 'IN_PROGRESS' : 'QUEUED',
+              percentDone,
+            }));
+          })
+          .then(() => {
+            if (!job.archives || job.archives.length === 0) {
+              throw new Error('No archives generated');
+            }
+
+            const downloadUrl = job.archives[0].storagePath;
+            const timeoutId = getDownloadTimeout();
+            const fileUri = `${Paths.document.uri}adx-downloads/${file.name}`;
+            console.log(`[downloadSingleSong] Downloading Google Drive file for ${item.title}`);
+
+            return FileSystem.downloadAsync(downloadUrl, fileUri)
+              .then(() => {
+                clearTimeout(timeoutId);
+                console.log(`[downloadSingleSong] Google Drive download completed for ${item.title}`);
+                setDownloadedMap((prev) => ({ ...prev, [songId]: true }));
+                addCompletedFile(file, item.title);
+              })
+              .catch((error: unknown) => {
+                clearTimeout(timeoutId);
+                throw error;
+              });
+          });
+      })
+      .then(() => {
+        handleDownloadComplete(songId);
+      })
+      .catch((error) => {
+        handleDownloadError(error, songId);
+      });
   };
 
   // Derived state: track which songs are currently downloading
@@ -34,105 +128,32 @@ export const useDownload = () => {
     const isMajdata = isMajdataSong(item);
     console.log(`[downloadSingleSong] Starting for ${item.title} (${songId}), isMajdata=${isMajdata}`);
 
-    setDownloadJobs((prev) => {
-      const exists = prev.some((job) => job.id === songId);
-      if (exists) return prev;
-      return [
-        ...prev,
-        {
-          id: songId,
-          title: item.title,
-          artist: item.artist,
-          status: 'QUEUED',
-        },
-      ];
-    });
+    addDownloadJobIfMissing(songId, item);
 
     try {
       if (isMajdata) {
-        // Download majdata song
         console.log(`[downloadSingleSong] Starting majdata download for ${item.title}`);
-        const timeoutId = setTimeout(() => {
-          throw new Error('Download timed out (90s limit)');
-        }, 90000);
+        const timeoutId = getDownloadTimeout();
 
         try {
-          setDownloadJobs((prev) =>
-            prev.map((entry) =>
-              entry.id === songId
-                ? { ...entry, status: 'IN_PROGRESS' }
-                : entry
-            )
-          );
+          updateDownloadJob(songId, (entry) => ({ ...entry, status: 'IN_PROGRESS' }));
 
           await downloadMajdataSong(item.majdataId!, item.title, file);
 
           clearTimeout(timeoutId);
           console.log(`[downloadSingleSong] Majdata download completed for ${item.title}`);
           setDownloadedMap((prev) => ({ ...prev, [songId]: true }));
-          batchCompletedFilesRef.current.push({ file, title: item.title });
-          console.log(`[downloadSingleSong] Added to batch, batch count=${batchCompletedFilesRef.current.length}`);
+          addCompletedFile(file, item.title);
         } catch (error) {
           clearTimeout(timeoutId);
           throw error;
         }
       } else {
-        // Download Google Drive song
-        console.log(`[downloadSingleSong] Starting Google Drive download for ${item.title}`);
-        const job = await ExportJob.create(item.folderId!, item.zetarakuId || item.folderId!);
-
         // Don't await - let download progress in background and complete asynchronously
-        job.waitForSuccess((status, percentDone) => {
-          setDownloadJobs((prev) =>
-            prev.map((entry) =>
-              entry.id === songId
-                ? {
-                    ...entry,
-                    status: status === 'IN_PROGRESS' ? 'IN_PROGRESS' : 'QUEUED',
-                    percentDone,
-                  }
-                : entry
-            )
-          );
-        })
-          .then(() => {
-            // Job succeeded, now download the file
-            if (!job.archives || job.archives.length === 0) {
-              throw new Error('No archives generated');
-            }
-
-            const downloadUrl = job.archives[0].storagePath;
-            const timeoutId = setTimeout(() => {
-              throw new Error('Download timed out (90s limit)');
-            }, 90000);
-
-            // Get the file URI for the download destination
-            const fileUri = `${Paths.document.uri}adx-downloads/${file.name}`;
-            console.log(`[downloadSingleSong] Downloading Google Drive file for ${item.title}`);
-            
-            return FileSystem.downloadAsync(downloadUrl, fileUri).then(() => {
-              clearTimeout(timeoutId);
-              console.log(`[downloadSingleSong] Google Drive download completed for ${item.title}`);
-              setDownloadedMap((prev) => ({ ...prev, [songId]: true }));
-
-              // Accumulate file for batch opening
-              batchCompletedFilesRef.current.push({ file, title: item.title });
-              console.log(`[downloadSingleSong] Added to batch, batch count=${batchCompletedFilesRef.current.length}`);
-            }).catch((error: unknown) => {
-              clearTimeout(timeoutId);
-              throw error;
-            });
-          })
-          .then(() => {
-            handleDownloadComplete(songId);
-          })
-          .catch((error) => {
-            handleDownloadError(error, songId);
-          });
+        startGoogleDriveDownload(item, songId, file);
         return;
       }
 
-      // For majdata songs, handle completion synchronously
       handleDownloadComplete(songId);
     } catch (error) {
       console.error('Error:', error);
@@ -237,7 +258,7 @@ export const useDownload = () => {
     console.error('Error:', error);
     completedDownloadsRef.current += 1;
     const errorMessage = error instanceof Error 
-      ? (error.name === 'AbortError' ? 'Download timed out (90s limit)' : error.message)
+      ? (error.name === 'AbortError' ? DOWNLOAD_TIMEOUT_MESSAGE : error.message)
       : 'An unknown error occurred';
     Alert.alert('Error', errorMessage);
 
