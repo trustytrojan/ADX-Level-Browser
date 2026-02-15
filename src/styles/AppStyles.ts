@@ -210,6 +210,11 @@ export const styles = StyleSheet.create({
     lineHeight: 20,
     marginBottom: 20,
   },
+  settingsModalText: {
+    fontSize: 14,
+    color: '#9aa3b2',
+    lineHeight: 20,
+  },
   helpModalCloseButton: {
     backgroundColor: '#007AFF',
     paddingVertical: 10,

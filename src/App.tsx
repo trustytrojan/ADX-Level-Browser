@@ -1,11 +1,13 @@
 import { StatusBar } from 'expo-status-bar';
-import { View, ActivityIndicator, AppState, Text, Pressable, Linking, Modal, Platform } from 'react-native';
+import { View, ActivityIndicator, AppState, Text, Pressable, Linking, Platform } from 'react-native';
 import { useEffect, useRef, useState } from 'react';
 import type { SongItem } from './types';
 import { SearchBar } from './components/SearchBar';
 import { DownloadJobsList } from './components/DownloadJobsList';
 import { SongList } from './components/SongList';
 import { SelectionToolbar } from './components/SelectionToolbar';
+import { HelpModal } from './components/HelpModal';
+import { SettingsModal } from './components/SettingsModal';
 import { useSearch } from './hooks/useSearch';
 import { useDownload } from './hooks/useDownload';
 import { useSelection } from './hooks/useSelection';
@@ -16,6 +18,8 @@ import { Entypo, Ionicons } from '@expo/vector-icons';
 
 export default function App() {
   const [showHelpModal, setShowHelpModal] = useState(false);
+  const [showSettingsModal, setShowSettingsModal] = useState(false);
+  const [useRomanizedMetadata, setUseRomanizedMetadata] = useState(false);
   const [songs, setSongs] = useState<SongItem[]>([]);
   const [dbLoading, setDbLoading] = useState(true);
   const [dbError, setDbError] = useState<string | null>(null);
@@ -130,7 +134,7 @@ export default function App() {
               <Ionicons name="logo-github" size={24} color="#9aa3b2" />
             </Pressable>
             <Pressable 
-              onPress={() => {}} 
+              onPress={() => setShowSettingsModal(true)} 
               hitSlop={12}
             >
               <Ionicons name="settings-outline" size={24} color="#9aa3b2" />
@@ -186,6 +190,7 @@ export default function App() {
         setDownloadedMap={setDownloadedMap}
         searchText={searchText}
         loading={loading}
+        useRomanizedMetadata={useRomanizedMetadata}
         refreshing={refreshing}
         onRefresh={handleRefresh}
       />
@@ -198,35 +203,18 @@ export default function App() {
         />
       )}
 
-      <Modal
+      <HelpModal
         visible={showHelpModal}
-        animationType="fade"
-        transparent={true}
-        onRequestClose={() => setShowHelpModal(false)}
-      >
-        <Pressable style={styles.helpModalOverlay} onPress={() => setShowHelpModal(false)}>
-          <View style={styles.helpModalContent}>
-            <Text style={styles.helpModalTitle}>Help</Text>
-            <Text style={styles.helpModalText}>
-              This is a helper application for downloading and importing ADX files to AstroDX.{'\n'}
-              Here's how to use the app:{'\n'}
-              - Pull down on the song list to refresh the database.{'\n'}
-              - Button colors: Converts are dark gray; Majdata songs are blue.{'\n'}
-              - Filter by song title/artist with the search bar.{'\n'}
-              - Tap a song to start downloading it.{'\n'}
-              - You can download multiple songs simultaneously. Once all downloads complete, all songs will be imported into AstroDX at once!{'\n'}
-              - If a song has a <Ionicons name="checkmark-circle" size={20} color="#4caf50" />, it is already downloaded inside this app. Tap on it to immediately import to AstroDX.{'\n'}
-              - You can press and hold on a song to enter multi-select mode, which lets you perform the above actions on multiple songs.
-            </Text>
-            <Pressable
-              style={styles.helpModalCloseButton}
-              onPress={() => setShowHelpModal(false)}
-            >
-              <Text style={styles.helpModalCloseButtonText}>Close</Text>
-            </Pressable>
-          </View>
-        </Pressable>
-      </Modal>
+        onClose={() => setShowHelpModal(false)}
+      />
+
+      <SettingsModal
+        visible={showSettingsModal}
+        useRomanizedMetadata={useRomanizedMetadata}
+        onRomanizedMetadataChange={setUseRomanizedMetadata}
+        onCacheCleared={() => setDownloadedMap({})}
+        onClose={() => setShowSettingsModal(false)}
+      />
 
       {/* since we only support expo go on ios, and it needs 'inverted' to be visible */}
       <StatusBar style={Platform.OS === 'ios' ? 'inverted' : 'auto'} />

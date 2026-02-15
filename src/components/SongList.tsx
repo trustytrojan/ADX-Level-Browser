@@ -18,6 +18,7 @@ interface SongListProps {
   loading: boolean;
   refreshing: boolean;
   onRefresh: () => void;
+  useRomanizedMetadata: boolean;
 }
 
 export const SongList = ({
@@ -33,6 +34,7 @@ export const SongList = ({
   loading,
   refreshing,
   onRefresh,
+  useRomanizedMetadata,
 }: SongListProps) => {
   const viewableItemsChanged = useRef(({ viewableItems }: { viewableItems: Array<{ item: SongItem }> }) => {
     setDownloadedMap((prev) => {
@@ -69,6 +71,7 @@ export const SongList = ({
               isSelectionMode={isSelectionMode}
               isSelected={isSelected(songId)}
               onPress={onSongPress}
+              useRomanizedMetadata={useRomanizedMetadata}
               onLongPress={onSongLongPress}
             />
           );

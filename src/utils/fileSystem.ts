@@ -21,3 +21,16 @@ export const isGoogleDriveSong = (item: SongItem): boolean => {
   return !!item.folderId;
 };
 
+export const clearDownloadCache = async (): Promise<void> => {
+  const downloadsDir = new Directory(Paths.document, 'adx-downloads');
+  try {
+    // Delete the entire adx-downloads directory
+    if (downloadsDir.exists) {
+      downloadsDir.delete();
+    }
+  } catch (error) {
+    // If directory doesn't exist, that's fine
+    console.error('Error clearing download cache:', error);
+    throw error;
+  }
+};

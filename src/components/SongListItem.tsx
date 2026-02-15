@@ -12,6 +12,7 @@ interface SongListItemProps {
   isSelected: boolean;
   onPress: (item: SongItem) => void;
   onLongPress: (item: SongItem) => void;
+  useRomanizedMetadata: boolean;
 }
 
 export const SongListItem = ({
@@ -22,10 +23,15 @@ export const SongListItem = ({
   isSelected,
   onPress,
   onLongPress,
+  useRomanizedMetadata,
 }: SongListItemProps) => {
   const isMajdata = isMajdataSong(item);
   const id = item.folderId || item.majdataId;
   const isDownloading = downloading[id!];
+
+  const displayTitle = useRomanizedMetadata && item.romanizedTitle ? item.romanizedTitle : item.title;
+  const displayArtist = useRomanizedMetadata && item.romanizedArtist ? item.romanizedArtist : item.artist;
+  const displayDesigner = useRomanizedMetadata && item.romanizedDesigner ? item.romanizedDesigner : item.designer;
 
   return (
     <TouchableOpacity
@@ -46,8 +52,8 @@ export const SongListItem = ({
           </View>
         )}
         <View style={styles.resultTextGroup}>
-          <Text style={styles.resultText}>{item.title}</Text>
-          <Text style={styles.resultSubtext}>{item.artist}{isMajdata ? `\nDesigned by: ${item.designer}` : ''}</Text>
+          <Text style={styles.resultText}>{displayTitle}</Text>
+          <Text style={styles.resultSubtext}>{displayArtist}{isMajdata ? `\nDesigned by: ${displayDesigner}` : ''}</Text>
         </View>
         {isDownloading
           ? <ActivityIndicator size="small" color="#007AFF" style={styles.downloadIndicator} />
