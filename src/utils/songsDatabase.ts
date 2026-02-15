@@ -11,12 +11,12 @@ const SONGS_DB_FILENAME = 'songs.json';
  */
 export async function loadSongsDatabase(): Promise<SongItem[]> {
   const dataDir = new Directory(Paths.document, 'data');
-  await dataDir.create({ intermediates: true, idempotent: true });
+  dataDir.create({ intermediates: true, idempotent: true });
   
   const songsFile = new File(dataDir, SONGS_DB_FILENAME);
 
   if (!songsFile.exists) {
-    console.log('Songs database not found locally, downloading from GitHub...');
+    // console.log('Songs database not found locally, downloading from GitHub...');
     await downloadSongsDatabase(songsFile);
   }
 
@@ -27,7 +27,7 @@ export async function loadSongsDatabase(): Promise<SongItem[]> {
   // Deduplicate songs by folderId (keep first occurrence)
   const songs = Array.from(new Map(rawSongs.map(item => [item.folderId, item])).values());
   
-  console.log(`Loaded ${songs.length} songs from database`);
+  // console.log(`Loaded ${songs.length} songs from database`);
   return songs;
 }
 
@@ -48,8 +48,8 @@ async function downloadSongsDatabase(targetFile: File): Promise<void> {
     // Validate it's valid JSON before saving
     JSON.parse(jsonText);
     
-    await targetFile.write(jsonText);
-    console.log('Songs database downloaded successfully');
+    targetFile.write(jsonText);
+    // console.log('Songs database downloaded successfully');
   } catch (error) {
     console.error('Error downloading songs database:', error);
     throw new Error(`Failed to download songs database: ${error}`);
@@ -62,11 +62,11 @@ async function downloadSongsDatabase(targetFile: File): Promise<void> {
  */
 export async function refreshSongsDatabase(): Promise<SongItem[]> {
   const dataDir = new Directory(Paths.document, 'data');
-  await dataDir.create({ intermediates: true, idempotent: true });
+  dataDir.create({ intermediates: true, idempotent: true });
   
   const songsFile = new File(dataDir, SONGS_DB_FILENAME);
   
-  console.log('Refreshing songs database...');
+  // console.log('Refreshing songs database...');
   await downloadSongsDatabase(songsFile);
   
   return loadSongsDatabase();

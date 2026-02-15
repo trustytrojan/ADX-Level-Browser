@@ -104,7 +104,7 @@ export default function App() {
     try {
       const updatedSongs = await refreshSongsDatabase();
       setSongs(updatedSongs);
-      console.log('Songs database refreshed successfully');
+      // console.log('Songs database refreshed successfully');
     } catch (error) {
       console.error('Failed to refresh songs database:', error);
       // Continue with existing songs on error
@@ -120,7 +120,7 @@ export default function App() {
           <Text style={styles.headerTitle}>AstroDX Convert Browser</Text>
           <View style={styles.headerRight}>
             <Pressable
-              onPress={() => { console.log('github icon pressed'); Linking.openURL('https://github.com/trustytrojan/adx-convert-browser') }}
+              onPress={() => Linking.openURL('https://github.com/trustytrojan/adx-convert-browser')}
               style={styles.githubButton}
               hitSlop={12}
             >
