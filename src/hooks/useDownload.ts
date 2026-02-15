@@ -1,13 +1,14 @@
 import { useState, useRef } from 'react';
 import { Alert } from 'react-native';
+import * as FileSystem from 'expo-file-system/legacy';
+import { Paths } from 'expo-file-system';
 import type { SongItem, DownloadState, DownloadJobItem } from '../types';
-import { getFileForSong } from '../utils/fileSystem';
+import { getFileForSong, isMajdataSong } from '../utils/fileSystem';
 import { openWithAstroDX, openMultipleWithAstroDX } from '../utils/sharing';
 import { ExportJob, fetchFolderName } from '../services/gdrive';
-import { File } from 'expo-file-system';
+import { downloadMajdataSong } from '../services/majdata';
 
 export const useDownload = () => {
-  const [downloading, setDownloading] = useState<DownloadState>({});
   const [downloadJobs, setDownloadJobs] = useState<DownloadJobItem[]>([]);
   const [downloadedMap, setDownloadedMap] = useState<Record<string, boolean>>({});
   const totalDownloadsRef = useRef<number>(0);
@@ -15,166 +16,135 @@ export const useDownload = () => {
   const batchCompletedFilesRef = useRef<Array<{ file: any; title: string }>>([]);
   const shouldClearOnNextActiveRef = useRef<boolean>(false);
 
-  const handleSongPress = async (item: SongItem) => {
-    const file = getFileForSong(item);
-    
-    // If file already exists, accumulate it for batch opening
-    if (file.exists) {
-      setDownloadedMap((prev) => ({ ...prev, [item.folderId]: true }));
-      batchCompletedFilesRef.current.push({ file, title: item.title });
-      
-      // Check if other downloads are active
-      setDownloading((prev) => {
-        const hasOtherDownloads = Object.values(prev).some(d => d);
-        if (!hasOtherDownloads) {
-          // No other downloads, open accumulated files
-          const files = batchCompletedFilesRef.current.map(f => f.file);
-          if (files.length === 1) {
-            openWithAstroDX(files[0], batchCompletedFilesRef.current[0].title).catch(console.error);
-          } else if (files.length > 1) {
-            openMultipleWithAstroDX(files).catch(console.error);
-          }
-          batchCompletedFilesRef.current = [];
-        }
-        return prev;
-      });
-      return;
-    }
+  const getSongId = (item: SongItem): string => {
+    return item.folderId || item.majdataId || '';
+  };
 
-    setDownloading((prev) => ({ ...prev, [item.folderId]: true }));
+  // Derived state: track which songs are currently downloading
+  const downloading: DownloadState = downloadJobs.reduce((acc, job) => {
+    if (job.status !== 'COMPLETED') {
+      acc[job.id] = true;
+    }
+    return acc;
+  }, {} as DownloadState);
+
+  const downloadSingleSong = async (item: SongItem) => {
+    const file = getFileForSong(item);
+    const songId = getSongId(item);
+    const isMajdata = isMajdataSong(item);
+    console.log(`[downloadSingleSong] Starting for ${item.title} (${songId}), isMajdata=${isMajdata}`);
+
+    setDownloadJobs((prev) => {
+      const exists = prev.some((job) => job.id === songId);
+      if (exists) return prev;
+      return [
+        ...prev,
+        {
+          id: songId,
+          title: item.title,
+          artist: item.artist,
+          status: 'QUEUED',
+        },
+      ];
+    });
 
     try {
-      // Initialize batch refs if this is the first download
-      if (totalDownloadsRef.current === 0) {
-        totalDownloadsRef.current = 1;
-        completedDownloadsRef.current = 0;
-      } else {
-        totalDownloadsRef.current += 1;
-      }
+      if (isMajdata) {
+        // Download majdata song
+        console.log(`[downloadSingleSong] Starting majdata download for ${item.title}`);
+        const timeoutId = setTimeout(() => {
+          throw new Error('Download timed out (90s limit)');
+        }, 90000);
 
-      setDownloadJobs((prev) => {
-        const exists = prev.some((job) => job.folderId === item.folderId);
-        if (exists) return prev;
-        return [
-          ...prev,
-          {
-            folderId: item.folderId,
-            title: item.title,
-            artist: item.artist,
-            status: 'QUEUED',
-          },
-        ];
-      });
-
-      // const folderName = await fetchFolderName(item.folderId);
-      const job = await ExportJob.create(item.folderId, item.songId);
-
-      // console.log(`ExportJob started for folderId=${item.folderId} songId=${item.songId}`);
-      
-      // Don't await - let download progress in background and complete asynchronously
-      job.waitForSuccess((status, percentDone) => {
-        // console.log(`ExportJob status=${status} for folderId=${item.folderId} songId='${item.songId}'`);
-        setDownloadJobs((prev) =>
-          prev.map((entry) =>
-            entry.folderId === item.folderId
-              ? {
-                  ...entry,
-                  status: status === 'IN_PROGRESS' ? 'IN_PROGRESS' : 'QUEUED',
-                  percentDone,
-                }
-              : entry
-          )
-        );
-      })
-        .then(() => {
-          // console.log(`ExportJob SUCCEEDED for folderId=${item.folderId} songId='${item.songId}'`);
-
-          // Job succeeded, now download the file
-          if (!job.archives || job.archives.length === 0) {
-            throw new Error('No archives generated');
-          }
-
-          const downloadUrl = job.archives[0].storagePath;
-          const controller = new AbortController();
-          const timeoutId = setTimeout(() => controller.abort(), 90000);
-          // console.log(`Download started for folderId=${item.folderId} songId='${item.songId}'`);
-
-          return File.downloadFileAsync(downloadUrl, file).then(() => {
-            // console.log(`Download finished for folderId=${item.folderId} songId='${item.songId}'`);
-            clearTimeout(timeoutId);
-            setDownloadedMap((prev) => ({ ...prev, [item.folderId]: true }));
-
-            // Accumulate file for batch opening
-            batchCompletedFilesRef.current.push({ file, title: item.title });
-          }).catch((error) => {
-            clearTimeout(timeoutId);
-            throw error;
-          });
-        })
-        .then(() => {
-          // Download complete, check if other downloads are still active
-          completedDownloadsRef.current += 1;
+        try {
           setDownloadJobs((prev) =>
             prev.map((entry) =>
-              entry.folderId === item.folderId
-                ? { ...entry, status: 'COMPLETED', percentDone: 100 }
+              entry.id === songId
+                ? { ...entry, status: 'IN_PROGRESS' }
                 : entry
             )
           );
 
-          setDownloading((prev) => {
-            const { [item.folderId]: _, ...remaining } = prev;
-            const hasOtherDownloads = Object.values(remaining).some(d => d);
+          await downloadMajdataSong(item.majdataId!, item.title, file);
 
-            if (!hasOtherDownloads) {
-              // All downloads complete - open all accumulated files
-              const files = batchCompletedFilesRef.current.map(f => f.file);
-              const totalCompleted = batchCompletedFilesRef.current.length;
-              if (files.length === 1) {
-                openWithAstroDX(files[0], batchCompletedFilesRef.current[0].title).catch(console.error);
-              } else if (files.length > 1) {
-                openMultipleWithAstroDX(files).catch(console.error);
-              }
-              batchCompletedFilesRef.current = [];
-              totalDownloadsRef.current = 0;
-              completedDownloadsRef.current = 0;
-              if (files.length > 0) {
-                shouldClearOnNextActiveRef.current = true;
-              }
+          clearTimeout(timeoutId);
+          console.log(`[downloadSingleSong] Majdata download completed for ${item.title}`);
+          setDownloadedMap((prev) => ({ ...prev, [songId]: true }));
+          batchCompletedFilesRef.current.push({ file, title: item.title });
+          console.log(`[downloadSingleSong] Added to batch, batch count=${batchCompletedFilesRef.current.length}`);
+        } catch (error) {
+          clearTimeout(timeoutId);
+          throw error;
+        }
+      } else {
+        // Download Google Drive song
+        console.log(`[downloadSingleSong] Starting Google Drive download for ${item.title}`);
+        const job = await ExportJob.create(item.folderId!, item.zetarakuId || item.folderId!);
+
+        // Don't await - let download progress in background and complete asynchronously
+        job.waitForSuccess((status, percentDone) => {
+          setDownloadJobs((prev) =>
+            prev.map((entry) =>
+              entry.id === songId
+                ? {
+                    ...entry,
+                    status: status === 'IN_PROGRESS' ? 'IN_PROGRESS' : 'QUEUED',
+                    percentDone,
+                  }
+                : entry
+            )
+          );
+        })
+          .then(() => {
+            // Job succeeded, now download the file
+            if (!job.archives || job.archives.length === 0) {
+              throw new Error('No archives generated');
             }
 
-            return remaining;
-          });
-        })
-        .catch((error) => {
-          console.error('Error:', error);
-          completedDownloadsRef.current += 1;
-          const errorMessage = error instanceof Error 
-            ? (error.name === 'AbortError' ? 'Download timed out (90s limit)' : error.message)
-            : 'An unknown error occurred';
-          Alert.alert('Error', errorMessage);
+            const downloadUrl = job.archives[0].storagePath;
+            const timeoutId = setTimeout(() => {
+              throw new Error('Download timed out (90s limit)');
+            }, 90000);
 
-          setDownloadJobs((prev) => prev.filter((entry) => entry.folderId !== item.folderId));
-          setDownloading((prev) => {
-            const { [item.folderId]: _, ...remaining } = prev;
-            return remaining;
+            // Get the file URI for the download destination
+            const fileUri = `${Paths.document.uri}adx-downloads/${file.name}`;
+            console.log(`[downloadSingleSong] Downloading Google Drive file for ${item.title}`);
+            
+            return FileSystem.downloadAsync(downloadUrl, fileUri).then(() => {
+              clearTimeout(timeoutId);
+              console.log(`[downloadSingleSong] Google Drive download completed for ${item.title}`);
+              setDownloadedMap((prev) => ({ ...prev, [songId]: true }));
+
+              // Accumulate file for batch opening
+              batchCompletedFilesRef.current.push({ file, title: item.title });
+              console.log(`[downloadSingleSong] Added to batch, batch count=${batchCompletedFilesRef.current.length}`);
+            }).catch((error: unknown) => {
+              clearTimeout(timeoutId);
+              throw error;
+            });
+          })
+          .then(() => {
+            handleDownloadComplete(songId);
+          })
+          .catch((error) => {
+            handleDownloadError(error, songId);
           });
-        });
+        return;
+      }
+
+      // For majdata songs, handle completion synchronously
+      handleDownloadComplete(songId);
     } catch (error) {
       console.error('Error:', error);
-      const errorMessage = error instanceof Error 
-        ? (error.name === 'AbortError' ? 'Download timed out (90s limit)' : error.message)
-        : 'An unknown error occurred';
-      Alert.alert('Error', errorMessage);
-
-      setDownloading((prev) => {
-        const { [item.folderId]: _, ...remaining } = prev;
-        return remaining;
-      });
+      handleDownloadError(error, songId);
     }
   };
 
-  const handleBatchDownload = async (items: SongItem[]) => {
+  const handleDownloads = async (items: SongItem[]) => {
+    if (items.length === 0) {
+      return;
+    }
+
     // Separate already downloaded and to be downloaded
     const alreadyDownloaded: SongItem[] = [];
     const itemsToDownload: SongItem[] = [];
@@ -188,20 +158,10 @@ export const useDownload = () => {
       }
     });
 
-    // If all items are already downloaded, send them via SEND_MULTIPLE
-    if (alreadyDownloaded.length > 0 && itemsToDownload.length === 0) {
-      const files = alreadyDownloaded.map(getFileForSong);
-      await openMultipleWithAstroDX(files);
-      return;
-    }
+    console.log(`[handleDownloads] itemsToDownload:`, itemsToDownload);
+    console.log(`[handleDownloads] alreadyDownloaded:`, alreadyDownloaded);
 
-    // If no items to download and none already downloaded (shouldn't happen)
-    if (itemsToDownload.length === 0) {
-      Alert.alert('Already Downloaded', 'All selected songs are already downloaded.');
-      return;
-    }
-
-    // Send already downloaded files via SEND_MULTIPLE (don't await - let it run in background)
+    // Send already downloaded files (don't await - let it run in background)
     if (alreadyDownloaded.length > 0) {
       const files = alreadyDownloaded.map(getFileForSong);
       openMultipleWithAstroDX(files).catch((error) => {
@@ -209,12 +169,81 @@ export const useDownload = () => {
       });
     }
 
-    // Start downloads for items to be downloaded
+    // If nothing to download, we're done
+    if (itemsToDownload.length === 0) {
+      if (alreadyDownloaded.length === 0) {
+        Alert.alert('Already Downloaded', 'All selected songs are already downloaded.');
+      }
+      return;
+    }
+
+    // Initialize batch tracking for downloads
     totalDownloadsRef.current = itemsToDownload.length;
     completedDownloadsRef.current = 0;
     batchCompletedFilesRef.current = [];
-    itemsToDownload.forEach(handleSongPress);
+
+    // Start all downloads
+    itemsToDownload.forEach((item) => {
+      downloadSingleSong(item);
+    });
   };
+
+  const handleDownloadComplete = (songId: string) => {
+    completedDownloadsRef.current += 1;
+    console.log(`[handleDownloadComplete] Completed=${completedDownloadsRef.current}, Total=${totalDownloadsRef.current}, songId=${songId}`);
+    setDownloadJobs((prev) =>
+      prev.map((entry) =>
+        entry.id === songId
+          ? { ...entry, status: 'COMPLETED', percentDone: 100 }
+          : entry
+      )
+    );
+
+    // Check if all downloads are complete
+    if (completedDownloadsRef.current === totalDownloadsRef.current) {
+      // All downloads complete - open all accumulated files
+      const files = batchCompletedFilesRef.current.map(f => f.file);
+      const batchTitles = batchCompletedFilesRef.current.map(f => f.title);
+      console.log(`[handleDownloadComplete] All downloads complete! Opening ${files.length} files`);
+      console.log(`[handleDownloadComplete] Batch contains: ${batchTitles.join(', ')}`);
+      
+      // Snapshot the batch before clearing to prevent interference from new downloads
+      const filesToOpen = [...files];
+      const titlesToOpen = [...batchTitles];
+      
+      if (filesToOpen.length === 1) {
+        console.log(`[handleDownloadComplete] Opening single file: ${titlesToOpen[0]}`);
+        openWithAstroDX(filesToOpen[0], titlesToOpen[0]).catch(console.error);
+      } else if (filesToOpen.length > 1) {
+        console.log(`[handleDownloadComplete] Opening ${filesToOpen.length} files with openMultipleWithAstroDX`);
+        openMultipleWithAstroDX(filesToOpen).catch(console.error);
+      } else {
+        console.log(`[handleDownloadComplete] WARNING: No files to open despite completion!`);
+      }
+      
+      // Clear the batch after snapshotting
+      batchCompletedFilesRef.current = [];
+      totalDownloadsRef.current = 0;
+      completedDownloadsRef.current = 0;
+      if (filesToOpen.length > 0) {
+        shouldClearOnNextActiveRef.current = true;
+      }
+    } else {
+      console.log(`[handleDownloadComplete] Still waiting for ${totalDownloadsRef.current - completedDownloadsRef.current} more download(s)`);
+    }
+  };
+
+  const handleDownloadError = (error: unknown, songId: string) => {
+    console.error('Error:', error);
+    completedDownloadsRef.current += 1;
+    const errorMessage = error instanceof Error 
+      ? (error.name === 'AbortError' ? 'Download timed out (90s limit)' : error.message)
+      : 'An unknown error occurred';
+    Alert.alert('Error', errorMessage);
+
+    setDownloadJobs((prev) => prev.filter((entry) => entry.id !== songId));
+  };
+
 
   const handleAppBecameActive = () => {
     if (!shouldClearOnNextActiveRef.current) return;
@@ -231,9 +260,9 @@ export const useDownload = () => {
     downloading,
     downloadJobs,
     downloadedMap,
-    handleSongPress,
-    handleBatchDownload,
+    handleDownloads,
     setDownloadedMap,
     handleAppBecameActive,
   };
 };
+

@@ -104,6 +104,9 @@ export const styles = StyleSheet.create({
     backgroundColor: '#1b1f2a',
     borderRadius: 6,
   },
+  resultButtonMajdata: {
+    backgroundColor: '#1b2534',
+  },
   resultButtonDisabled: {
     opacity: 0.5,
   },

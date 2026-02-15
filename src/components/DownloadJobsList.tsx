@@ -18,7 +18,7 @@ export const DownloadJobsList = ({ downloadJobs }: DownloadJobsListProps) => {
         <FlatList
           style={styles.downloadsList}
           data={downloadJobs}
-          keyExtractor={(item) => item.folderId}
+          keyExtractor={(item) => item.id}
           renderItem={({ item }) => (
             <View style={styles.resultButton}>
               <View style={styles.resultContent}>

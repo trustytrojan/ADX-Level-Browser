@@ -1,5 +1,5 @@
 import { Alert, Platform, AppState } from 'react-native';
-import { File, Paths } from 'expo-file-system';
+import { Directory, File, Paths } from 'expo-file-system';
 import { getContentUriAsync } from 'expo-file-system/legacy';
 import * as Sharing from 'expo-sharing';
 import * as IntentLauncher from 'expo-intent-launcher';
@@ -78,6 +78,8 @@ export const openWithAstroDX = async (file: File, songTitle: string): Promise<vo
 export const openMultipleWithAstroDX = async (files: File[]): Promise<void> => {
   if (files.length === 0) return;
 
+  console.log('[openMultipleWithAstroDX] files:', files);
+
   const appState = AppState.currentState;
   const isAppInBackground = appState !== 'active';
 
@@ -96,6 +98,8 @@ export const openMultipleWithAstroDX = async (files: File[]): Promise<void> => {
       // Zip all ADX files into one combined ADX file
       const filePaths = files.map(f => f.uri);
 
+      console.log(`[openMultipleWithAstroDX] filePaths:`, filePaths);
+
       // remove the ".adx" extension, use these as the destination directory for unzipping each adx
       const withoutExtensions: string[] = [];
 
@@ -105,11 +109,24 @@ export const openMultipleWithAstroDX = async (files: File[]): Promise<void> => {
         await unzip(uri, withoutExt);
       }
 
+      console.log(`[openMultipleWithAstroDX] withoutExtensions:`, withoutExtensions);
+
+      if (combinedSongsFile.exists) {
+        console.log(`[openMultipleWithAstroDX] combinedSongFiles exists, deleting`);
+        combinedSongsFile.delete();
+      }
+
       // zip all the unzipped song folders into "combined-songs.adx"
       await zip(withoutExtensions, outputPath);
 
+      console.log(`[openMultipleWithAstroDX] Zipping complete, verifying zip`);
+      const fflate = await import('fflate');
+      const zipBytes = combinedSongsFile.bytesSync();
+      const unzipped = fflate.unzipSync(zipBytes);
+      console.log(`[openMultipleWithAstroDX] unzipped:`, Object.keys(unzipped));
+
       // delete all the unzipped song folders
-      withoutExtensions.map(uri => new File(uri).delete());
+      withoutExtensions.forEach(uri => new Directory(uri).delete());
     } else if (Platform.OS === 'ios') {
       const fflate = await import('fflate');
 
@@ -131,6 +148,8 @@ export const openMultipleWithAstroDX = async (files: File[]): Promise<void> => {
       // console.log(`Compressed final container ADX`);
 
       combinedSongsFile.write(finalAdx);
+    } else {
+      throw new Error('Unsupported platform');
     }
 
     // Create a File object for the zipped file and open it with AstroDX

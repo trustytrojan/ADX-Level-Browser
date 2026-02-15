@@ -7,7 +7,7 @@ const SONGS_DB_FILENAME = 'songs.json';
 /**
  * Loads the songs database from private app data.
  * If the database doesn't exist locally, downloads it from GitHub first.
- * @returns Promise<SongItem[]> - Array of songs, deduplicated by folderId
+ * @returns Promise<SongItem[]> - Array of songs, deduplicated by folderId or majdataId
  */
 export async function loadSongsDatabase(): Promise<SongItem[]> {
   const dataDir = new Directory(Paths.document, 'data');
@@ -24,8 +24,15 @@ export async function loadSongsDatabase(): Promise<SongItem[]> {
   const jsonText = await songsFile.text();
   const rawSongs = JSON.parse(jsonText) as SongItem[];
   
-  // Deduplicate songs by folderId (keep first occurrence)
-  const songs = Array.from(new Map(rawSongs.map(item => [item.folderId, item])).values());
+  // Deduplicate songs by folderId or majdataId (keep first occurrence)
+  const songs = Array.from(
+    new Map(
+      rawSongs.map(item => {
+        const id = item.folderId || item.majdataId || '';
+        return [id, item];
+      })
+    ).values()
+  );
   
   // console.log(`Loaded ${songs.length} songs from database`);
   return songs;

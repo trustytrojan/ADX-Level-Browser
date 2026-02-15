@@ -47,8 +47,7 @@ export default function App() {
     downloading,
     downloadJobs,
     downloadedMap,
-    handleSongPress,
-    handleBatchDownload,
+    handleDownloads,
     setDownloadedMap,
     handleAppBecameActive,
   } = useDownload();
@@ -79,24 +78,29 @@ export default function App() {
   }, []);
 
   const handleItemPress = (item: SongItem) => {
+    const songId = item.folderId || item.majdataId || '';
     if (isSelectionMode) {
-      toggleSelection(item.folderId);
+      toggleSelection(songId);
     } else {
-      handleSongPress(item);
+      handleDownloads([item]);
     }
   };
 
   const handleItemLongPress = (item: SongItem) => {
+    const songId = item.folderId || item.majdataId || '';
     if (!isSelectionMode) {
-      enterSelectionMode(item.folderId);
+      enterSelectionMode(songId);
     }
   };
 
   const handleDownloadSelected = () => {
     const selectedIds = getSelectedIds();
-    const selectedSongs = songs.filter((song) => selectedIds.includes(song.folderId));
+    const selectedSongs = songs.filter((song) => {
+      const songId = song.folderId || song.majdataId || '';
+      return selectedIds.includes(songId);
+    });
     exitSelectionMode();
-    handleBatchDownload(selectedSongs);
+    handleDownloads(selectedSongs);
   };
 
   const handleRefresh = async () => {

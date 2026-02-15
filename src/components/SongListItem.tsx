@@ -1,5 +1,6 @@
 import { Text, View, TouchableOpacity, ActivityIndicator } from 'react-native';
 import type { SongItem, DownloadState } from '../types';
+import { isMajdataSong } from '../utils/fileSystem';
 import { styles } from '../styles/AppStyles';
 
 interface SongListItemProps {
@@ -21,12 +22,15 @@ export const SongListItem = ({
   onPress,
   onLongPress,
 }: SongListItemProps) => {
-  const isDownloading = downloading[item.folderId];
+  const isMajdata = isMajdataSong(item);
+  const id = item.folderId || item.majdataId;
+  const isDownloading = downloading[id!];
 
   return (
     <TouchableOpacity
       style={[
         styles.resultButton,
+        isMajdata && styles.resultButtonMajdata,
         isDownloading && styles.resultButtonDisabled,
         isSelectionMode && isSelected && styles.resultButtonSelected,
       ]}

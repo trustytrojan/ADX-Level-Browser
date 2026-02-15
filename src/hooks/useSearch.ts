@@ -22,7 +22,7 @@ export const useSearch = (songs: SongItem[]) => {
         song.artist,
         song.romanizedTitle,
         song.romanizedArtist,
-        song.songId,
+        song.zetarakuId,
         song.communityNames,
       ]
         .filter(Boolean)

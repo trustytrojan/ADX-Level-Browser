@@ -38,11 +38,12 @@ export const SongList = ({
     setDownloadedMap((prev) => {
       let next = prev;
       viewableItems.forEach(({ item }) => {
-        if (prev[item.folderId] !== undefined) return;
+        const songId = item.folderId || item.majdataId || '';
+        if (prev[songId] !== undefined) return;
         const file = getFileForSong(item);
         if (file.exists) {
           if (next === prev) next = { ...prev };
-          next[item.folderId] = true;
+          next[songId] = true;
         }
       });
       return next;
@@ -57,18 +58,21 @@ export const SongList = ({
       <FlatList
         style={styles.songsList}
         data={songs}
-        keyExtractor={(item) => item.folderId}
-        renderItem={({ item }) => (
-          <SongListItem
-            item={item}
-            downloading={downloading}
-            downloaded={downloadedMap[item.folderId] || false}
-            isSelectionMode={isSelectionMode}
-            isSelected={isSelected(item.folderId)}
-            onPress={onSongPress}
-            onLongPress={onSongLongPress}
-          />
-        )}
+        keyExtractor={(item) => item.folderId || item.majdataId || ''}
+        renderItem={({ item }) => {
+          const songId = item.folderId || item.majdataId || '';
+          return (
+            <SongListItem
+              item={item}
+              downloading={downloading}
+              downloaded={downloadedMap[songId] || false}
+              isSelectionMode={isSelectionMode}
+              isSelected={isSelected(songId)}
+              onPress={onSongPress}
+              onLongPress={onSongLongPress}
+            />
+          );
+        }}
         ListEmptyComponent={
           !loading && searchText ? (
             <Text style={styles.emptyText}>No songs found</Text>
