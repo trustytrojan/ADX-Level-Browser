@@ -1,7 +1,7 @@
 # adx-convert-browser
 React Native app to have an all-in-one interface for searching and downloading songs/charts converted from the maimai arcade games for AstroDX.
 
-The song database ([songs.json](/songs.json)) is built with the scripts in [adx-convert-db](https://github.com/trustytrojan/adx-convert-db). Currently it is "hard-coded" into the app, but in the future I'll add the ability for the app to download a `songs.json` from my webserver so that I can update it if necessary with new convert data.
+The song database (`songs.json`) is built with the scripts in [adx-convert-db](https://github.com/trustytrojan/adx-convert-db). On first launch, the app downloads the latest `songs.json` from that repository and stores it in the app's private data directory. This allows the database to be updated independently of the app itself.
 
 ## Installing/Running the app
 

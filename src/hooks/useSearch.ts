@@ -57,6 +57,11 @@ export const useSearch = (songs: SongItem[]) => {
     performSearch(searchText);
   };
 
+  // Update filtered songs when songs prop changes
+  useEffect(() => {
+    performSearch(searchText);
+  }, [songs]);
+
   // Cleanup timeout on unmount
   useEffect(() => {
     return () => {

@@ -1,7 +1,6 @@
 import { StatusBar } from 'expo-status-bar';
 import { View, ActivityIndicator, AppState, Text, Pressable, Linking, Modal } from 'react-native';
 import { useEffect, useRef, useState } from 'react';
-import songsData from '../songs.json';
 import type { SongItem } from './types';
 import { SearchBar } from './components/SearchBar';
 import { DownloadJobsList } from './components/DownloadJobsList';
@@ -13,13 +12,28 @@ import { useSelection } from './hooks/useSelection';
 import { resetIntentLock } from './utils/sharing';
 import { styles } from './styles/AppStyles';
 import GithubIcon from '../assets/github.svg';
-
-// Deduplicate songs by folderId (keep first occurrence)
-const rawSongs = songsData as SongItem[];
-const songs = Array.from(new Map(rawSongs.map(item => [item.folderId, item])).values());
+import { loadSongsDatabase, refreshSongsDatabase } from './utils/songsDatabase';
 
 export default function App() {
   const [showHelpModal, setShowHelpModal] = useState(false);
+  const [songs, setSongs] = useState<SongItem[]>([]);
+  const [dbLoading, setDbLoading] = useState(true);
+  const [dbError, setDbError] = useState<string | null>(null);
+  const [refreshing, setRefreshing] = useState(false);
+
+  // Load songs database on mount
+  useEffect(() => {
+    loadSongsDatabase()
+      .then((loadedSongs) => {
+        setSongs(loadedSongs);
+        setDbLoading(false);
+      })
+      .catch((error) => {
+        console.error('Failed to load songs database:', error);
+        setDbError(error.message || 'Failed to load songs database');
+        setDbLoading(false);
+      });
+  }, []);
 
   const {
     searchText,
@@ -85,6 +99,20 @@ export default function App() {
     handleBatchDownload(selectedSongs);
   };
 
+  const handleRefresh = async () => {
+    setRefreshing(true);
+    try {
+      const updatedSongs = await refreshSongsDatabase();
+      setSongs(updatedSongs);
+      console.log('Songs database refreshed successfully');
+    } catch (error) {
+      console.error('Failed to refresh songs database:', error);
+      // Continue with existing songs on error
+    } finally {
+      setRefreshing(false);
+    }
+  };
+
   return (
     <View style={styles.container}>
       <View style={styles.header}>
@@ -114,7 +142,21 @@ export default function App() {
         onSubmitEditing={handleSubmitEditing}
       />
 
-      {loading && (
+      {dbLoading && (
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="large" color="#007AFF" />
+          <Text style={styles.loadingText}>Loading songs database...</Text>
+        </View>
+      )}
+
+      {dbError && (
+        <View style={styles.loadingContainer}>
+          <Text style={styles.errorText}>❌ {dbError}</Text>
+          <Text style={styles.errorSubtext}>Please check your connection and restart the app</Text>
+        </View>
+      )}
+
+      {!dbLoading && !dbError && loading && (
         <View style={styles.loadingContainer}>
           <ActivityIndicator size="large" color="#007AFF" />
         </View>
@@ -133,6 +175,8 @@ export default function App() {
         setDownloadedMap={setDownloadedMap}
         searchText={searchText}
         loading={loading}
+        refreshing={refreshing}
+        onRefresh={handleRefresh}
       />
 
       {isSelectionMode && (
@@ -155,6 +199,7 @@ export default function App() {
             <Text style={styles.helpModalText}>
               This is a helper application for downloading and importing ADX files to AstroDX.{'\n'}
               Here's how to use the app:{'\n'}
+              - Pull down on the song list to refresh the database.{'\n'}
               - Filter by song title/artist with the search bar.{'\n'}
               - Tap a song to start downloading it.{'\n'}
               - You can add multiple songs to the download list. Once all songs in the list complete, they will all be imported into AstroDX at the same time!{'\n'}

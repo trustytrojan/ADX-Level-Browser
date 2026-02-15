@@ -1,4 +1,4 @@
-import { Text, FlatList } from 'react-native';
+import { Text, FlatList, RefreshControl } from 'react-native';
 import { useRef } from 'react';
 import type { SongItem, DownloadState } from '../types';
 import { SongListItem } from './SongListItem';
@@ -16,6 +16,8 @@ interface SongListProps {
   setDownloadedMap: React.Dispatch<React.SetStateAction<Record<string, boolean>>>;
   searchText: string;
   loading: boolean;
+  refreshing: boolean;
+  onRefresh: () => void;
 }
 
 export const SongList = ({
@@ -29,6 +31,8 @@ export const SongList = ({
   setDownloadedMap,
   searchText,
   loading,
+  refreshing,
+  onRefresh,
 }: SongListProps) => {
   const viewableItemsChanged = useRef(({ viewableItems }: { viewableItems: Array<{ item: SongItem }> }) => {
     setDownloadedMap((prev) => {
@@ -72,6 +76,14 @@ export const SongList = ({
         }
         onViewableItemsChanged={viewableItemsChanged.current}
         viewabilityConfig={viewabilityConfig}
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={onRefresh}
+            tintColor="#007AFF"
+            colors={['#007AFF']}
+          />
+        }
       />
     </>
   );

@@ -61,6 +61,22 @@ export const styles = StyleSheet.create({
     padding: 20,
     alignItems: 'center',
   },
+  loadingText: {
+    marginTop: 12,
+    fontSize: 14,
+    color: '#9aa3b2',
+  },
+  errorText: {
+    fontSize: 16,
+    color: '#ff6b6b',
+    textAlign: 'center',
+    marginBottom: 8,
+  },
+  errorSubtext: {
+    fontSize: 12,
+    color: '#9aa3b2',
+    textAlign: 'center',
+  },
   sectionLabel: {
     marginTop: 8,
     marginBottom: 6,
