@@ -1,7 +1,7 @@
 # adx-convert-browser
 React Native app to have an all-in-one interface for searching and downloading songs/charts converted from the maimai arcade games for AstroDX.
 
-The song database ([songs.json](/songs.json)) is built with the scripts in [adx-convert-db](/trustytrojan/adx-convert-db). Currently it is "hard-coded" into the app, but in the future I'll add the ability for the app to download a `songs.json` from my webserver so that I can update it if necessary with new convert data.
+The song database ([songs.json](/songs.json)) is built with the scripts in [adx-convert-db](https://github.com/trustytrojan/adx-convert-db). Currently it is "hard-coded" into the app, but in the future I'll add the ability for the app to download a `songs.json` from my webserver so that I can update it if necessary with new convert data.
 
 ## Installing/Running the app
 
@@ -26,6 +26,7 @@ I only built an APK on Linux, but given that Android tooling is available for al
 4. Run `cd android` then `./gradlew assemble`. The APK is located at `android/app/build/outputs/apk/release/app-release.apk` relative to the project root.
 
 ## To-Do List
+- Expand [adx-convert-db](https://github.com/trustytrojan/adx-convert-db) to include community-made short names of songs using https://github.com/lomotos10/GCM-bot/blob/main/data/aliases/en/maimai.tsv
 - Expand the app to list & download fanmade charts with the [Majdata-Online](https://majdata.net/) API
   - Base URL: `https://majdata.net/api3/api/maichart`
   - List/Search endpoint: `/list?sort=<|likep|commp|playp>&page=0&search=<query>`
