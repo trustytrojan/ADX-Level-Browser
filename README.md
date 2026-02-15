@@ -26,7 +26,6 @@ I only built an APK on Linux, but given that Android tooling is available for al
 4. Run `cd android` then `./gradlew assemble`. The APK is located at `android/app/build/outputs/apk/release/app-release.apk` relative to the project root.
 
 ## To-Do List
-- Expand [adx-convert-db](https://github.com/trustytrojan/adx-convert-db) to include community-made short names of songs using https://github.com/lomotos10/GCM-bot/blob/main/data/aliases/en/maimai.tsv
 - Expand the app to list & download fanmade charts with the [Majdata-Online](https://majdata.net/) API
   - Base URL: `https://majdata.net/api3/api/maichart`
   - List/Search endpoint: `/list?sort=<|likep|commp|playp>&page=0&search=<query>`
