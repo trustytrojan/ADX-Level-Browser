@@ -187,9 +187,14 @@ export const useDownload = () => {
     // Send already downloaded files (don't await - let it run in background)
     if (alreadyDownloaded.length > 0) {
       const files = alreadyDownloaded.map(getFileForSong);
-      openMultipleWithAstroDX(files).catch((error) => {
-        console.error('Error sending files to AstroDX:', error);
-      });
+      if (files.length === 1)
+        openWithAstroDX(files[0], alreadyDownloaded[0].title).catch((error) => {
+          console.error('Error sending files to AstroDX:', error);
+        });
+      else
+        openMultipleWithAstroDX(files).catch((error) => {
+          console.error('Error sending files to AstroDX:', error);
+        });
     }
 
     // If nothing to download, we're done
