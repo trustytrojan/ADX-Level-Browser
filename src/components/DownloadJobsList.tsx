@@ -1,7 +1,7 @@
-import { Text, View, FlatList, ActivityIndicator } from 'react-native';
+import { Text, View, FlatList } from 'react-native';
 import type { DownloadJobItem } from '../types';
 import { styles } from '../styles/AppStyles';
-import Ionicons from '@expo/vector-icons/Ionicons';
+import { SongElement } from './SongElement';
 
 interface DownloadJobsListProps {
   downloadJobs: DownloadJobItem[];
@@ -21,19 +21,10 @@ export const DownloadJobsList = ({ downloadJobs }: DownloadJobsListProps) => {
           data={downloadJobs}
           keyExtractor={(item) => item.id}
           renderItem={({ item }) => (
-            <View style={styles.resultButton}>
-              <View style={styles.resultContent}>
-                <View style={styles.resultTextGroup}>
-                  <Text style={styles.resultText}>{item.title}</Text>
-                  {!!item.artist && <Text style={styles.resultSubtext}>{item.artist}</Text>}
-                </View>
-                {item.status === 'COMPLETED' ? (
-                  <Ionicons name="checkmark-circle" size={20} color="#4caf50" />
-                ) : (
-                  <ActivityIndicator size="small" color="#007AFF" style={styles.downloadIndicator} />
-                )}
-              </View>
-            </View>
+            <SongElement
+              item={item}
+              downloading={item.status === 'IN_PROGRESS'}
+            />
           )}
         />
       </View>

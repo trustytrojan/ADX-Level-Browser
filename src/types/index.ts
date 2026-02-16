@@ -49,6 +49,9 @@ export interface DownloadJobItem {
   id: string; // Either folderId or majdataId
   title: string;
   artist?: string;
+  designer?: string;
+  romanizedDesigner?: string;
+  isMajdata?: boolean;
   status: 'QUEUED' | 'IN_PROGRESS' | 'COMPLETED';
   percentDone?: number;
 }

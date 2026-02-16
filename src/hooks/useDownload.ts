@@ -41,12 +41,17 @@ export const useDownload = () => {
         return prev;
       }
 
+      const isMajdata = isMajdataSong(item);
+
       return [
         ...prev,
         {
           id: songId,
           title: item.title,
           artist: item.artist,
+          designer: item.designer,
+          romanizedDesigner: item.romanizedDesigner,
+          isMajdata,
           status: 'QUEUED',
         },
       ];
