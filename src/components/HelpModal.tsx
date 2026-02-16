@@ -19,8 +19,6 @@ export const HelpModal = ({ visible, onClose }: HelpModalProps) => {
         <View style={styles.helpModalContent}>
           <Text style={styles.helpModalTitle}>Help</Text>
           <Text style={styles.helpModalText}>
-            This is a helper application for downloading and importing ADX files to AstroDX.{'\n'}
-            Here's how to use the app:{'\n'}
             {'\u2022'} Pull down on the song list to refresh the database.{'\n'}
             {'\u2022'} Maimai converts are dark gray in color, and fanmade charts are blue.{'\n'}
             {'\u2022'} You can search for songs by title, artist, or chart designer (for Majdata charts) with the search bar.{'\n'}

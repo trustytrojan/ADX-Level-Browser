@@ -195,10 +195,18 @@ export const useDownload = () => {
       return;
     }
 
-    // Initialize batch tracking for downloads
-    totalDownloadsRef.current = itemsToDownload.length;
-    completedDownloadsRef.current = 0;
-    batchCompletedFilesRef.current = [];
+    // Initialize or update batch tracking for downloads
+    const hasActiveDownloads = totalDownloadsRef.current > completedDownloadsRef.current;
+    
+    if (hasActiveDownloads) {
+      // Add to existing batch (individual songs tapped while downloads in progress)
+      totalDownloadsRef.current += itemsToDownload.length;
+    } else {
+      // Start new batch
+      totalDownloadsRef.current = itemsToDownload.length;
+      completedDownloadsRef.current = 0;
+      batchCompletedFilesRef.current = [];
+    }
 
     // Start all downloads
     itemsToDownload.forEach((item) => {
@@ -218,6 +226,7 @@ export const useDownload = () => {
     );
 
     // Check if all downloads are complete
+    // console.log(`[handleDownloadComplete] completedDownloadsRef=${completedDownloadsRef.current} totalDownloadsRef=${totalDownloadsRef.current}`)
     if (completedDownloadsRef.current === totalDownloadsRef.current) {
       // All downloads complete - open all accumulated files
       const files = batchCompletedFilesRef.current.map(f => f.file);
@@ -236,7 +245,7 @@ export const useDownload = () => {
         // console.log(`[handleDownloadComplete] Opening ${filesToOpen.length} files with openMultipleWithAstroDX`);
         openMultipleWithAstroDX(filesToOpen).catch(console.error);
       } else {
-        console.log(`[handleDownloadComplete] WARNING: No files to open despite completion!`);
+        console.warn(`[handleDownloadComplete] No files to open despite completion!`);
       }
       
       // Clear the batch after snapshotting
