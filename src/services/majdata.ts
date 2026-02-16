@@ -1,6 +1,6 @@
 import * as FileSystem from 'expo-file-system/legacy';
-import { zip } from 'react-native-zip-archive';
 import { File, Directory, Paths } from 'expo-file-system';
+import { Platform } from 'react-native';
 
 const MAJDATA_BASE_URL = 'https://majdata.net/api3/api/maichart';
 
@@ -30,27 +30,41 @@ export const downloadMajdataSong = async (
     // Download files
     const trackPath = `${tempDir.uri}/${songTitle}/track.mp3`;
     const chartPath = `${tempDir.uri}/${songTitle}/maidata.txt`;
-	const imagePath = `${tempDir.uri}/${songTitle}/bg.png`;
+	  const imagePath = `${tempDir.uri}/${songTitle}/bg.png`;
     const videoPath = `${tempDir.uri}/${songTitle}/pv.mp4`;
 
-    await FileSystem.downloadAsync(trackUrl, trackPath);
-    await FileSystem.downloadAsync(chartUrl, chartPath);
-    await FileSystem.downloadAsync(imageUrl, imagePath);
+    await Promise.all([
+      FileSystem.downloadAsync(trackUrl, trackPath),
+      FileSystem.downloadAsync(chartUrl, chartPath),
+      FileSystem.downloadAsync(imageUrl, imagePath),
+      FileSystem.downloadAsync(videoUrl, videoPath).catch(err => {
+        console.warn('Failed to download video file, continuing without it:', err);
+      })
+    ]);
 
-    // Video is optional
-    let videoExists = false;
-    try {
-      await FileSystem.downloadAsync(videoUrl, videoPath);
-      videoExists = true;
-    } catch (error) {
-      console.warn('Failed to download video file, continuing without it:', error);
-    }
+    // track, chart, image are expected to exist at this point
 
     // Get the output file URI
     const outputFileUri = `${Paths.document.uri}adx-downloads/${outputFile.name}`;
 
     // Create zip archive
-    await zip(tempDir.uri, outputFileUri);
+    if (Platform.OS === 'android') {
+      const { zip } = await import('react-native-zip-archive');
+      await zip(tempDir.uri, outputFileUri);
+    } else if (Platform.OS === 'ios') {
+      const fflate = await import('fflate');
+
+      const videoFile = new File(videoPath);
+      
+      const zipped = fflate.zipSync({
+        [`${songTitle}/track.mp3`]: new File(trackPath).bytesSync(),
+        [`${songTitle}/maidata.txt`]: new File(chartPath).bytesSync(),
+        [`${songTitle}/bg.png`]: new File(imagePath).bytesSync(),
+        ...(videoFile.exists ? { [`${songTitle}/pv.mp4`]: videoFile.bytesSync() } : {})
+      });
+
+      new File(outputFileUri).write(zipped);
+    }
 
     // Clean up temp directory
     try {

@@ -1,6 +1,7 @@
 import { Text, View, FlatList, ActivityIndicator } from 'react-native';
 import type { DownloadJobItem } from '../types';
 import { styles } from '../styles/AppStyles';
+import Ionicons from '@expo/vector-icons/Ionicons';
 
 interface DownloadJobsListProps {
   downloadJobs: DownloadJobItem[];
@@ -27,7 +28,7 @@ export const DownloadJobsList = ({ downloadJobs }: DownloadJobsListProps) => {
                   {!!item.artist && <Text style={styles.resultSubtext}>{item.artist}</Text>}
                 </View>
                 {item.status === 'COMPLETED' ? (
-                  <Text style={styles.downloadedCheck}>✓</Text>
+                  <Ionicons name="checkmark-circle" size={20} color="#4caf50" />
                 ) : (
                   <ActivityIndicator size="small" color="#007AFF" style={styles.downloadIndicator} />
                 )}
