@@ -21,13 +21,14 @@ export const HelpModal = ({ visible, onClose }: HelpModalProps) => {
           <Text style={styles.helpModalText}>
             This is a helper application for downloading and importing ADX files to AstroDX.{'\n'}
             Here's how to use the app:{'\n'}
-            - Pull down on the song list to refresh the database.{'\n'}
-            - Button colors: Converts are dark gray; Majdata songs are blue.{'\n'}
-            - Filter by song title/artist with the search bar.{'\n'}
-            - Tap a song to start downloading it.{'\n'}
-            - You can download multiple songs simultaneously. Once all downloads complete, all songs will be imported into AstroDX at once!{'\n'}
-            - If a song has a <Ionicons name="checkmark-circle" size={20} color="#4caf50" />, it is already downloaded inside this app. Tap on it to immediately import to AstroDX.{'\n'}
-            - You can press and hold on a song to enter multi-select mode, which lets you perform the above actions on multiple songs.
+            {'\u2022'} Pull down on the song list to refresh the database.{'\n'}
+            {'\u2022'} Maimai converts are dark gray in color, and fanmade charts are blue.{'\n'}
+            {'\u2022'} You can search for songs by title, artist, or chart designer (for Majdata charts) with the search bar.{'\n'}
+            {'\u2022'} Tap a song to start downloading it.{'\n'}
+            {'\u2022'} You can download multiple songs at once. Once all downloads complete, all songs will be imported into AstroDX!{'\n'}
+            {'\u2022'} If a song has a <Ionicons name="checkmark-circle" size={20} color="#4caf50" />, it is already downloaded inside this app.
+            Tap on it to immediately import to AstroDX.{'\n'}
+            {'\u2022'} You can press and hold on a song to enter multi-select mode, which lets you perform the above actions on multiple songs.
           </Text>
           <Pressable
             style={styles.helpModalCloseButton}

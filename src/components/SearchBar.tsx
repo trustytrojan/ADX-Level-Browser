@@ -12,7 +12,7 @@ export const SearchBar = ({ value, onChangeText, onSubmitEditing }: SearchBarPro
     <View style={styles.searchContainer}>
       <TextInput
         style={styles.searchBar}
-        placeholder="Search for songs..."
+        placeholder="Search..."
         value={value}
         onChangeText={onChangeText}
         onSubmitEditing={onSubmitEditing}

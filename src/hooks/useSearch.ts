@@ -20,8 +20,10 @@ export const useSearch = (songs: SongItem[]) => {
       const haystack = [
         song.title,
         song.artist,
+        song.designer,
         song.romanizedTitle,
         song.romanizedArtist,
+        song.romanizedDesigner,
         song.zetarakuId,
         song.communityNames,
       ]
