@@ -11,6 +11,25 @@ APKs are built on every commit with GitHub Actions. You can download the latest 
 ### iOS/iPadOS
 Since I don't own a new enough Mac, and I don't want to give Apple my personal info, I'm going to be hosting a tunneled Expo development server. This means you can simply install [Expo Go from the App Store](https://apps.apple.com/us/app/expo-go/id982107779), scan the QR code below (whenever it is there) with the Camera app, and the app should download and run within Expo Go.
 
+```
+▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄
+█ ▄▄▄▄▄ █▄▄▄ ▀ ▄██ ▀▀██ ▄▄▄▄▄ █
+█ █   █ ██▄▀ █ ▄█▄▀▀▄▄█ █   █ █
+█ █▄▄▄█ ██▀▄ ▄▀▄█▄▀▄▄▀█ █▄▄▄█ █
+█▄▄▄▄▄▄▄█ ▀▄█ ▀▄█▄█▄█▄█▄▄▄▄▄▄▄█
+█▄▄▀  █▄█▀▄▀█▄█▄▀▄ ▄▀█▀▄█▀██▀▄█
+█   █▄▀▄▄▀▄██▄██▄█  █▀▄▀▄███▄▀█
+█▄  ▀▀▄▄█ ▄ █▀▄   █▄█▄▄  ▀▄█  █
+█▀▀▀▀█▀▄█▀ ▄█▀▀  ▄█ ▄ ▀▀ ██ █ █
+█ ▀▀▄▀ ▄ █ ▄ ▄██▀▀█▄ ▀██▄▀▀▀ ▄█
+█  █ ██▄ ▄▄█▀▄ ▄▄▄▄ ▄▄ ▄▄▄█▀▀▄█
+█▄▄█▄█▄▄█ ▄▀▄▀ █ █▄▄█ ▄▄▄ ▄▄█▄█
+█ ▄▄▄▄▄ ███▀ ▀ █▄▀ ▄  █▄█ ▄█▀██
+█ █   █ █ ▀▄▄▄ ▀▀▀▀ ▄▄ ▄ ▄▀▀█ █
+█ █▄▄▄█ █▀ ▄ ▄▄█▄█▄▀█▄ █  ▄▀▄ █
+█▄▄▄▄▄▄▄█▄▄▄███▄▄███▄▄▄▄█▄▄████
+```
+
 ## Development
 Have Node.js and NPM installed, then run `npm i`. Run the Expo dev server with `npx expo`.
 
