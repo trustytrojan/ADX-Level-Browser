@@ -1,5 +1,6 @@
 import { Text, View, TouchableOpacity, ActivityIndicator } from 'react-native';
 import Ionicons from '@expo/vector-icons/Ionicons';
+import { memo } from 'react';
 import type { SongItem, DownloadJobItem } from '../types';
 import { styles } from '../styles/AppStyles';
 
@@ -24,7 +25,7 @@ const isDownloadJobItem = (item: ElementItem): item is DownloadJobItem => {
   return 'status' in item && typeof (item as DownloadJobItem).status === 'string';
 };
 
-export const SongElement = ({
+export const SongElement = memo(({
   item,
   downloading = false,
   downloaded = false,
@@ -116,4 +117,4 @@ export const SongElement = ({
       </View>
     </TouchableOpacity>
   );
-};
+});

@@ -1,5 +1,5 @@
 import { Text, FlatList, RefreshControl, ActivityIndicator, View } from 'react-native';
-import { useRef } from 'react';
+import { useRef, useCallback } from 'react';
 import type { SongItem, DownloadState } from '../types';
 import { SongListItem } from './SongListItem';
 import { getFileForSong } from '../utils/fileSystem';
@@ -68,14 +68,33 @@ export const SongList = ({
     }
   };
 
-  const renderFooter = () => {
+  const renderFooter = useCallback(() => {
     if (!loadingMore) return null;
     return (
       <View style={{ padding: 16, alignItems: 'center' }}>
         <ActivityIndicator size="small" color="#007AFF" />
       </View>
     );
-  };
+  }, [loadingMore]);
+
+  const renderItem = useCallback(
+    ({ item }: { item: SongItem }) => {
+      const songId = item.id || '';
+      return (
+        <SongListItem
+          item={item}
+          downloading={downloading}
+          downloaded={downloadedMap[songId] || false}
+          isSelectionMode={isSelectionMode}
+          isSelected={isSelected(songId)}
+          onPress={onSongPress}
+          useRomanizedMetadata={useRomanizedMetadata}
+          onLongPress={onSongLongPress}
+        />
+      );
+    },
+    [downloading, downloadedMap, isSelectionMode, isSelected, onSongPress, onSongLongPress, useRomanizedMetadata]
+  );
 
   return (
     <>
@@ -84,21 +103,7 @@ export const SongList = ({
         style={styles.songsList}
         data={songs}
         keyExtractor={(item) => `${item.sourceId}:${item.id}`}
-        renderItem={({ item }) => {
-          const songId = item.id || '';
-          return (
-            <SongListItem
-              item={item}
-              downloading={downloading}
-              downloaded={downloadedMap[songId] || false}
-              isSelectionMode={isSelectionMode}
-              isSelected={isSelected(songId)}
-              onPress={onSongPress}
-              useRomanizedMetadata={useRomanizedMetadata}
-              onLongPress={onSongLongPress}
-            />
-          );
-        }}
+        renderItem={renderItem}
         ListEmptyComponent={
           !loading && searchText ? (
             <Text style={styles.emptyText}>No songs found</Text>

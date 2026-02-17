@@ -1,3 +1,4 @@
+import { memo } from 'react';
 import type { SongItem, DownloadState } from '../types';
 import { SongElement } from './SongElement';
 
@@ -12,7 +13,7 @@ interface SongListItemProps {
   useRomanizedMetadata: boolean;
 }
 
-export const SongListItem = ({
+export const SongListItem = memo(({
   item,
   downloading,
   downloaded,
@@ -37,4 +38,4 @@ export const SongListItem = ({
       useRomanizedMetadata={useRomanizedMetadata}
     />
   );
-};
+});

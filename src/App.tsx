@@ -1,6 +1,6 @@
 import { StatusBar } from 'expo-status-bar';
 import { View, ActivityIndicator, AppState, Text, Pressable, Linking, Platform } from 'react-native';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, useCallback } from 'react';
 import type { SongItem, AppSettings } from './types';
 import { SearchBar } from './components/SearchBar';
 import { DownloadJobsList } from './components/DownloadJobsList';
@@ -80,7 +80,14 @@ export default function App() {
       const result = await loadNextPage(paginationState, searchText);
       // console.log('Loaded more songs:', result.songs.length, 'Updated pagination:', result.paginationState);
       if (result.songs.length > 0) {
-        setSongs(prev => [...prev, ...result.songs]);
+        // Deduplicate songs by their unique key (sourceId:id)
+        setSongs(prev => {
+          const existingKeys = new Set(prev.map(song => `${song.sourceId}:${song.id}`));
+          const newUniqueSongs = result.songs.filter(
+            song => !existingKeys.has(`${song.sourceId}:${song.id}`)
+          );
+          return [...prev, ...newUniqueSongs];
+        });
       }
       // Always update pagination state, even if no songs returned (to update hasMore flags)
       setPaginationState(result.paginationState);
@@ -162,21 +169,21 @@ export default function App() {
     };
   }, []);
 
-  const handleItemPress = (item: SongItem) => {
+  const handleItemPress = useCallback((item: SongItem) => {
     const songId = item.id || '';
     if (isSelectionMode) {
       toggleSelection(songId);
     } else {
       handleDownloads([item]);
     }
-  };
+  }, [isSelectionMode, toggleSelection, handleDownloads]);
 
-  const handleItemLongPress = (item: SongItem) => {
+  const handleItemLongPress = useCallback((item: SongItem) => {
     const songId = item.id || '';
     if (!isSelectionMode) {
       enterSelectionMode(songId);
     }
-  };
+  }, [isSelectionMode, enterSelectionMode]);
 
   const handleDownloadSelected = () => {
     const selectedIds = getSelectedIds();
