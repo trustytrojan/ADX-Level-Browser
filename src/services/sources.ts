@@ -13,12 +13,6 @@ const DEFAULT_SOURCES: Source[] = [
     baseUrl: 'https://majdata.net/api3/api/maichart',
     enabled: true,
   },
-  {
-    id: 'converts',
-    name: 'Converts',
-    baseUrl: 'http://10.0.0.115:4000/adx/converts',
-    enabled: true
-  }
 ];
 
 /**

@@ -57,8 +57,11 @@ export const AddSourceModal = ({ visible, onClose, onSourceAdded }: AddSourceMod
       transparent={true}
       onRequestClose={handleClose}
     >
-      <Pressable style={styles.helpModalOverlay}>
-        <View style={styles.helpModalContent}>
+      <View style={styles.helpModalOverlay}>
+        <View 
+          style={styles.helpModalContent}
+          onStartShouldSetResponder={() => true}
+        >
           <Text style={styles.helpModalTitle}>Add Source</Text>
           
           <View style={{ marginBottom: 24 }}>
@@ -123,7 +126,7 @@ export const AddSourceModal = ({ visible, onClose, onSourceAdded }: AddSourceMod
             </Pressable>
           </View>
         </View>
-      </Pressable>
+      </View>
     </Modal>
   );
 };

@@ -8,6 +8,7 @@ import { SongList } from './components/SongList';
 import { SelectionToolbar } from './components/SelectionToolbar';
 import { HelpModal } from './components/HelpModal';
 import { SettingsModal } from './components/SettingsModal';
+import { AddSourceModal } from './components/AddSourceModal';
 import { useDownload } from './hooks/useDownload';
 import { useSelection } from './hooks/useSelection';
 import { resetIntentLock } from './utils/sharing';
@@ -19,6 +20,9 @@ import { Entypo, Ionicons } from '@expo/vector-icons';
 export default function App() {
   const [showHelpModal, setShowHelpModal] = useState(false);
   const [showSettingsModal, setShowSettingsModal] = useState(false);
+  const [showAddSourceModal, setShowAddSourceModal] = useState(false);
+  const [shouldReturnToSettings, setShouldReturnToSettings] = useState(false);
+  const [sourcesVersion, setSourcesVersion] = useState(0);
   const [settings, setSettings] = useState<AppSettings>({
     downloadVideos: true,
     useRomanizedMetadata: false,
@@ -211,11 +215,40 @@ export default function App() {
     await saveSettings(newSettings);
   };
 
+  const handleSourceAdded = () => {
+    setSourcesVersion(v => v + 1);
+    setShowAddSourceModal(false);
+    // Return to settings modal after a short delay
+    setTimeout(() => {
+      setShouldReturnToSettings(false);
+      setShowSettingsModal(true);
+    }, 300);
+  };
+  
+  const handleRequestAddSource = () => {
+    setShouldReturnToSettings(true);
+    setShowSettingsModal(false);
+    // Wait for settings modal to close before opening add source modal
+    setTimeout(() => {
+      setShowAddSourceModal(true);
+    }, 300);
+  };
+  
+  const handleAddSourceClose = () => {
+    setShowAddSourceModal(false);
+    if (shouldReturnToSettings) {
+      setTimeout(() => {
+        setShouldReturnToSettings(false);
+        setShowSettingsModal(true);
+      }, 300);
+    }
+  };
+
   return (
     <View style={styles.container}>
       <View style={styles.header}>
         <View style={styles.headerContent}>
-          <Text style={styles.headerTitle}>AstroDX Convert Browser</Text>
+          <Text style={styles.headerTitle}>ADX Level Browser</Text>
           <View style={styles.headerRight}>
             <Pressable
               onPress={() => Linking.openURL('https://github.com/trustytrojan/adx-convert-browser')}
@@ -301,10 +334,17 @@ export default function App() {
         onSettingsChange={handleSettingsChange}
         onCacheCleared={() => setDownloadedMap({})}
         onClose={() => setShowSettingsModal(false)}
+        sourcesVersion={sourcesVersion}
+        onRequestAddSource={handleRequestAddSource}
       />
 
-      {/* since we only support expo go on ios, and it needs 'inverted' to be visible */}
-      <StatusBar style={Platform.OS === 'ios' ? 'inverted' : 'auto'} />
+      <AddSourceModal
+        visible={showAddSourceModal}
+        onClose={handleAddSourceClose}
+        onSourceAdded={handleSourceAdded}
+      />
+
+      <StatusBar style='light' />
     </View>
   );
 }

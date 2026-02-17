@@ -66,8 +66,11 @@ export const EditSourceModal = ({ visible, source, onClose, onSourceUpdated }: E
       transparent={true}
       onRequestClose={handleClose}
     >
-      <Pressable style={styles.helpModalOverlay}>
-        <View style={styles.helpModalContent}>
+      <View style={styles.helpModalOverlay}>
+        <View 
+          style={styles.helpModalContent}
+          onStartShouldSetResponder={() => true}
+        >
           <Text style={styles.helpModalTitle}>Edit Source</Text>
           
           <View style={{ marginBottom: 24 }}>
@@ -132,7 +135,7 @@ export const EditSourceModal = ({ visible, source, onClose, onSourceUpdated }: E
             </Pressable>
           </View>
         </View>
-      </Pressable>
+      </View>
     </Modal>
   );
 };

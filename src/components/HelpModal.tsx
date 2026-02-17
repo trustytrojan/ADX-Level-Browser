@@ -15,8 +15,11 @@ export const HelpModal = ({ visible, onClose }: HelpModalProps) => {
       transparent={true}
       onRequestClose={onClose}
     >
-      <Pressable style={styles.helpModalOverlay}>
-        <View style={styles.helpModalContent}>
+      <View style={styles.helpModalOverlay}>
+        <View 
+          style={styles.helpModalContent}
+          onStartShouldSetResponder={() => true}
+        >
           <Text style={styles.helpModalTitle}>Help</Text>
           <Text style={styles.helpModalText}>
             {'\u2022'} Pull down on the song list to refresh the database.{'\n'}
@@ -35,7 +38,7 @@ export const HelpModal = ({ visible, onClose }: HelpModalProps) => {
             <Text style={styles.helpModalCloseButtonText}>Close</Text>
           </Pressable>
         </View>
-      </Pressable>
+      </View>
     </Modal>
   );
 };

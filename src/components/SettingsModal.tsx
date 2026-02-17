@@ -4,7 +4,6 @@ import { styles } from '../styles/AppStyles';
 import { clearDownloadCache } from '../utils/fileSystem';
 import { loadSources, deleteSource } from '../services/sources';
 import { SourcesList } from './SourcesList';
-import { AddSourceModal } from './AddSourceModal';
 import type { AppSettings, Source } from '../types';
 
 interface SettingsModalProps {
@@ -13,6 +12,8 @@ interface SettingsModalProps {
   onSettingsChange: (settings: AppSettings) => void;
   onCacheCleared: () => void;
   onClose: () => void;
+  sourcesVersion: number;
+  onRequestAddSource: () => void;
 }
 
 export const SettingsModal = ({
@@ -21,18 +22,25 @@ export const SettingsModal = ({
   onSettingsChange,
   onCacheCleared,
   onClose,
+  sourcesVersion,
+  onRequestAddSource,
 }: SettingsModalProps) => {
   const [clearingCache, setClearingCache] = useState(false);
   const [cacheCleared, setCacheCleared] = useState(false);
   const [sources, setSources] = useState<Source[]>([]);
-  const [showAddSourceModal, setShowAddSourceModal] = useState(false);
+  
+  const handleRequestAddSource = () => {
+    onRequestAddSource();
+  };
 
-  // Load sources when modal opens
+  // Load sources when modal opens or when sources are updated
   useEffect(() => {
     if (visible) {
-      loadSources().then(setSources).catch(console.error);
+      loadSources().then((loadedSources) => {
+        setSources(loadedSources);
+      }).catch(console.error);
     }
-  }, [visible]);
+  }, [visible, sourcesVersion]);
 
   const refreshSources = async () => {
     const updatedSources = await loadSources();
@@ -79,8 +87,21 @@ export const SettingsModal = ({
         transparent={true}
         onRequestClose={onClose}
       >
-        <Pressable style={styles.helpModalOverlay}>
-          <View style={styles.helpModalContent}>
+        <Pressable 
+          style={styles.helpModalOverlay}
+          onPress={() => console.log('[SettingsModal] Overlay Pressable onPress')}
+          onPressIn={() => console.log('[SettingsModal] Overlay Pressable onPressIn')}
+        >
+          <View 
+            style={styles.helpModalContent}
+            onStartShouldSetResponder={() => {
+              console.log('[SettingsModal] Content View onStartShouldSetResponder');
+              return true;
+            }}
+            onResponderRelease={() => {
+              console.log('[SettingsModal] Content View onResponderRelease');
+            }}
+          >
             <ScrollView showsVerticalScrollIndicator={false}>
               <Text style={styles.helpModalTitle}>Settings</Text>
               
@@ -111,7 +132,7 @@ export const SettingsModal = ({
               <SourcesList
                 sources={sources}
                 onDelete={handleDeleteSource}
-                onAddPress={() => setShowAddSourceModal(true)}
+                onAddPress={handleRequestAddSource}
                 onSourceUpdated={refreshSources}
               />
 
@@ -145,12 +166,6 @@ export const SettingsModal = ({
           </View>
         </Pressable>
       </Modal>
-
-      <AddSourceModal
-        visible={showAddSourceModal}
-        onClose={() => setShowAddSourceModal(false)}
-        onSourceAdded={refreshSources}
-      />
     </>
   );
 };
