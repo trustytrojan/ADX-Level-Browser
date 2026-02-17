@@ -17,6 +17,7 @@ type CompletedFileItem = {
 export const useDownload = (downloadVideos: boolean = true) => {
   const [downloadJobs, setDownloadJobs] = useState<DownloadJobItem[]>([]);
   const [downloadedMap, setDownloadedMap] = useState<Record<string, boolean>>({});
+  const [showCompressionLoading, setShowCompressionLoading] = useState(false);
   const totalDownloadsRef = useRef<number>(0);
   const completedDownloadsRef = useRef<number>(0);
   const batchCompletedFilesRef = useRef<CompletedFileItem[]>([]);
@@ -122,16 +123,21 @@ export const useDownload = (downloadVideos: boolean = true) => {
       }
     });
 
-    // Send already downloaded files (don't await - let it run in background)
-    if (alreadyDownloaded.length > 0) {
+    // All songs are already downloaded
+    if (itemsToDownload.length === 0 && alreadyDownloaded.length > 0) {
       const files = alreadyDownloaded.map(getFileForSong);
       if (files.length === 1)
         openWithAstroDX(files[0], alreadyDownloaded[0].title).catch((error) => {
           console.error('Error sending files to AstroDX:', error);
         });
       else
-        openMultipleWithAstroDX(files).catch((error) => {
+        openMultipleWithAstroDX(
+          files,
+          () => setShowCompressionLoading(true),
+          () => setShowCompressionLoading(false)
+        ).catch((error) => {
           console.error('Error sending files to AstroDX:', error);
+          setShowCompressionLoading(false);
         });
     }
 
@@ -185,7 +191,14 @@ export const useDownload = (downloadVideos: boolean = true) => {
       if (filesToOpen.length === 1) {
         openWithAstroDX(filesToOpen[0], titlesToOpen[0]).catch(console.error);
       } else if (filesToOpen.length > 1) {
-        openMultipleWithAstroDX(filesToOpen).catch(console.error);
+        openMultipleWithAstroDX(
+          filesToOpen,
+          () => setShowCompressionLoading(true),
+          () => setShowCompressionLoading(false)
+        ).catch((error) => {
+          console.error('Error sending files to AstroDX:', error);
+          setShowCompressionLoading(false);
+        });
       } else {
         console.warn(`[handleDownloadComplete] No files to open despite completion!`);
       }
@@ -227,6 +240,7 @@ export const useDownload = (downloadVideos: boolean = true) => {
     downloading,
     downloadJobs,
     downloadedMap,
+    showCompressionLoading,
     handleDownloads,
     setDownloadedMap,
     handleAppBecameActive,

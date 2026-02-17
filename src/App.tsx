@@ -9,6 +9,7 @@ import { SelectionToolbar } from './components/SelectionToolbar';
 import { HelpModal } from './components/HelpModal';
 import { SettingsModal } from './components/SettingsModal';
 import { AddSourceModal } from './components/AddSourceModal';
+import { CompressionLoadingModal } from './components/CompressionLoadingModal';
 import { useDownload } from './hooks/useDownload';
 import { useSelection } from './hooks/useSelection';
 import { resetIntentLock } from './utils/sharing';
@@ -143,6 +144,7 @@ export default function App() {
     downloading,
     downloadJobs,
     downloadedMap,
+    showCompressionLoading,
     handleDownloads,
     setDownloadedMap,
     handleAppBecameActive,
@@ -343,6 +345,8 @@ export default function App() {
         onClose={handleAddSourceClose}
         onSourceAdded={handleSourceAdded}
       />
+
+      <CompressionLoadingModal visible={showCompressionLoading} />
 
       <StatusBar style='light' />
     </View>

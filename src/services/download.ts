@@ -4,6 +4,8 @@ import { Platform } from 'react-native';
 import type { Song } from '../types';
 import { getSource, getTrackUrl, getImageUrl, getChartUrl, getVideoUrl } from './sources';
 
+const sanitizeFilename = (s: string) => s.replace(/[^a-z0-9._-]/gi, '-');
+
 /**
  * Download a song from any source and create a zipped .adx file
  * 
@@ -27,9 +29,11 @@ export const downloadSong = async (
   const tempDir = new Directory(Paths.document, `temp_${song.sourceId}_${song.id}`);
   tempDir.create({ intermediates: true, idempotent: true });
 
+  const songDirName = sanitizeFilename(song.title);
+
   try {
     // Create song directory inside temp directory
-    FileSystem.makeDirectoryAsync(`${tempDir.uri}/${song.title}`);
+    FileSystem.makeDirectoryAsync(`${tempDir.uri}/${songDirName}`);
 
     // Build URLs for all resources
     const trackUrl = getTrackUrl(source, song.id);
@@ -38,10 +42,10 @@ export const downloadSong = async (
     const videoUrl = getVideoUrl(source, song.id);
 
     // Define file paths
-    const trackPath = `${tempDir.uri}/${song.title}/track.mp3`;
-    const chartPath = `${tempDir.uri}/${song.title}/maidata.txt`;
-    const imagePath = `${tempDir.uri}/${song.title}/bg.png`;
-    const videoPath = `${tempDir.uri}/${song.title}/pv.mp4`;
+    const trackPath = `${tempDir.uri}/${songDirName}/track.mp3`;
+    const chartPath = `${tempDir.uri}/${songDirName}/maidata.txt`;
+    const imagePath = `${tempDir.uri}/${songDirName}/bg.png`;
+    const videoPath = `${tempDir.uri}/${songDirName}/pv.mp4`;
 
     // Download files in parallel
     const downloadPromises: Promise<any>[] = [
@@ -57,7 +61,7 @@ export const downloadSong = async (
       const videoPromise = fetch(videoUrl)
         .then(resp => {
           if (!resp.ok)
-            throw new Error(`[downloadSong] ${videoUrl} -> ${resp.status} ${resp.statusText}`);
+            throw new Error(`[downloadSong] [${videoUrl}] ${resp.status} ${resp.statusText}`);
           if (resp.headers.get('Content-Type') != 'video/mp4')
             throw new Error(`[downloadSong] [${videoUrl}] Content-Type is not video/mp4`);
           if (!resp.body)
@@ -86,14 +90,14 @@ export const downloadSong = async (
       const videoFile = new File(videoPath);
       
       const filesToZip: Record<string, Uint8Array> = {
-        [`${song.title}/track.mp3`]: new File(trackPath).bytesSync(),
-        [`${song.title}/maidata.txt`]: new File(chartPath).bytesSync(),
-        [`${song.title}/bg.png`]: new File(imagePath).bytesSync(),
+        [`${songDirName}/track.mp3`]: new File(trackPath).bytesSync(),
+        [`${songDirName}/maidata.txt`]: new File(chartPath).bytesSync(),
+        [`${songDirName}/bg.png`]: new File(imagePath).bytesSync(),
       };
 
       // Only include video if it was downloaded and exists
       if (downloadVideo && videoFile.exists) {
-        filesToZip[`${song.title}/pv.mp4`] = videoFile.bytesSync();
+        filesToZip[`${songDirName}/pv.mp4`] = videoFile.bytesSync();
       }
 
       const zipped = fflate.zipSync(filesToZip);

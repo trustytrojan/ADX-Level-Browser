@@ -1,4 +1,4 @@
-# adx-level-browser
+# ADX Level Browser
 A React Native/Expo app to have an all-in-one interface for searching, downloading, and importing levels for AstroDX.
 
 ## Architecture

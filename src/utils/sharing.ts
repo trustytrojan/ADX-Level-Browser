@@ -69,13 +69,16 @@ export const openWithAstroDX = async (file: File, songTitle: string): Promise<vo
             }
           }
         },
-        { text: 'OK', style: 'cancel' }
       ]
     );
   }
 };
 
-export const openMultipleWithAstroDX = async (files: File[]): Promise<void> => {
+export const openMultipleWithAstroDX = async (
+  files: File[],
+  onCompressionStart?: () => void,
+  onCompressionEnd?: () => void
+): Promise<void> => {
   if (files.length === 0) return;
 
   const appState = AppState.currentState;
@@ -125,12 +128,18 @@ export const openMultipleWithAstroDX = async (files: File[]): Promise<void> => {
         Object.assign(decompressedSongFolders, songFiles);
       }
 
-      // Show loading message
-      Alert.alert('Please Wait', 'Compressing Songs for Bulk Import...', [], { cancelable: false });
+      // Show loading modal
+      onCompressionStart?.();
+
+      // Give React time to render the modal before starting the synchronous compression
+      await new Promise(resolve => setTimeout(resolve, 300));
 
       const finalAdx = fflate.zipSync(decompressedSongFolders);
 
       combinedSongsFile.write(finalAdx);
+
+      // Hide loading modal
+      onCompressionEnd?.();
     } else {
       throw new Error('Unsupported platform');
     }
@@ -139,6 +148,7 @@ export const openMultipleWithAstroDX = async (files: File[]): Promise<void> => {
     await openWithAstroDX(combinedSongsFile, 'Combined Songs');
   } catch (error) {
     console.error('Error combining files:', error);
+    onCompressionEnd?.();
     Alert.alert('Error', 'Failed to combine files for sending to AstroDX');
   }
 };

@@ -1,7 +1,7 @@
 {
   "expo": {
-    "name": "ADX Converts",
-    "slug": "adx-convert-browser",
+    "name": "ADX Levels",
+    "slug": "adx_level_browser",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
@@ -14,12 +14,12 @@
     },
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.trustytrojan.adx-convert-browser"
+      "bundleIdentifier": "dev.trustytrojan.adx_level_browser"
     },
     "android": {
       "edgeToEdgeEnabled": true,
       "predictiveBackGestureEnabled": false,
-      "package": "com.trustytrojan.adxconvertbrowser"
+      "package": "dev.trustytrojan.adx_level_browser"
     },
     "web": {
       "favicon": "./assets/favicon.png"
