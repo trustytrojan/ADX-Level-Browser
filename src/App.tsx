@@ -69,7 +69,7 @@ export default function App() {
   const loadMoreSongs = async () => {
     const hasMore = hasMorePages();
     
-    console.log('loadMoreSongs called - hasMore:', hasMore, 'paginationState:', paginationState, 'loadingMore:', loadingMore, 'loading:', loading);
+    // console.log('loadMoreSongs called - hasMore:', hasMore, 'paginationState:', paginationState, 'loadingMore:', loadingMore, 'loading:', loading);
     
     if (!hasMore || loadingMore || loading) {
       return;
@@ -78,7 +78,7 @@ export default function App() {
     setLoadingMore(true);
     try {
       const result = await loadNextPage(paginationState, searchText);
-      console.log('Loaded more songs:', result.songs.length, 'Updated pagination:', result.paginationState);
+      // console.log('Loaded more songs:', result.songs.length, 'Updated pagination:', result.paginationState);
       if (result.songs.length > 0) {
         setSongs(prev => [...prev, ...result.songs]);
       }

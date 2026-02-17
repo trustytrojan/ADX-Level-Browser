@@ -79,6 +79,27 @@ export async function addSource(source: Source): Promise<void> {
 }
 
 /**
+ * Update an existing source
+ */
+export async function updateSource(sourceId: string, updatedSource: Partial<Source>): Promise<void> {
+  const sources = await loadSources();
+  const index = sources.findIndex(s => s.id === sourceId);
+  
+  if (index === -1) {
+    throw new Error(`Source with id "${sourceId}" not found`);
+  }
+  
+  // Update the source while keeping the original ID
+  sources[index] = {
+    ...sources[index],
+    ...updatedSource,
+    id: sourceId, // Preserve original ID
+  };
+  
+  await saveSources(sources);
+}
+
+/**
  * Delete a source
  */
 export async function deleteSource(sourceId: string): Promise<void> {
@@ -199,7 +220,7 @@ export async function loadNextPage(
 
       const sourceState = updatedPagination[source.id];
 
-      console.log(`[loadNextPage] sourceState:`, sourceState);
+      // console.log(`[loadNextPage] sourceState:`, sourceState);
 
       // Skip if no more pages
       if (!sourceState.hasMore) {
@@ -218,7 +239,7 @@ export async function loadNextPage(
             hasMore: true, // We got results, so there might be more
           };
         } else {
-          console.log(`[loadNextPage] empty array`);
+          // console.log(`[loadNextPage] empty array`);
           // No songs returned (empty array []), mark as no more pages
           updatedPagination[source.id] = {
             ...sourceState,
@@ -237,7 +258,7 @@ export async function loadNextPage(
     })
   );
 
-  console.log(`[loadNextPage] updatedPagination:`, updatedPagination);
+  // console.log(`[loadNextPage] updatedPagination:`, updatedPagination);
 
   return { songs: newSongs, paginationState: updatedPagination };
 }

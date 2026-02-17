@@ -112,6 +112,7 @@ export const SettingsModal = ({
                 sources={sources}
                 onDelete={handleDeleteSource}
                 onAddPress={() => setShowAddSourceModal(true)}
+                onSourceUpdated={refreshSources}
               />
 
               <View style={{ gap: 8 }}>

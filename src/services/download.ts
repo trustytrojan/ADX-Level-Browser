@@ -66,7 +66,7 @@ export const downloadSong = async (
           return resp.body.pipeTo(videoFile.writableStream());
         })
         .catch(err => {
-          console.warn('Failed to download video file, continuing without it:', err);
+          // console.log('Failed to download video file, continuing without it:', err);
         })
       downloadPromises.push(videoPromise);
     }

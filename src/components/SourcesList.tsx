@@ -1,14 +1,19 @@
 import { Text, View, Pressable, Alert } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { useState } from 'react';
 import type { Source } from '../types';
+import { EditSourceModal } from './EditSourceModal';
 
 interface SourcesListProps {
   sources: Source[];
   onDelete: (sourceId: string) => void;
   onAddPress: () => void;
+  onSourceUpdated: () => void;
 }
 
-export const SourcesList = ({ sources, onDelete, onAddPress }: SourcesListProps) => {
+export const SourcesList = ({ sources, onDelete, onAddPress, onSourceUpdated }: SourcesListProps) => {
+  const [editModalVisible, setEditModalVisible] = useState(false);
+  const [sourceToEdit, setSourceToEdit] = useState<Source | null>(null);
   const handleDeletePress = (source: Source) => {
     Alert.alert(
       'Delete Source',
@@ -22,6 +27,16 @@ export const SourcesList = ({ sources, onDelete, onAddPress }: SourcesListProps)
         },
       ]
     );
+  };
+
+  const handleEditPress = (source: Source) => {
+    setSourceToEdit(source);
+    setEditModalVisible(true);
+  };
+
+  const handleEditClose = () => {
+    setEditModalVisible(false);
+    setSourceToEdit(null);
   };
 
   return (
@@ -54,14 +69,29 @@ export const SourcesList = ({ sources, onDelete, onAddPress }: SourcesListProps)
             <Text numberOfLines={1} ellipsizeMode="tail" style={{ color: '#fff', fontSize: 14, fontWeight: '600' }}>{source.name}</Text>
             <Text numberOfLines={1} ellipsizeMode="middle" style={{ color: '#9aa3b2', fontSize: 12, marginTop: 2 }}>{source.baseUrl}</Text>
           </View>
-          <Pressable
-            onPress={() => handleDeletePress(source)}
-            hitSlop={12}
-          >
-            <Ionicons name="trash-outline" size={20} color="#ff6b6b" />
-          </Pressable>
+          <View style={{ flexDirection: 'row', gap: 12 }}>
+            <Pressable
+              onPress={() => handleEditPress(source)}
+              hitSlop={12}
+            >
+              <Ionicons name="pencil-outline" size={20} color="#007AFF" />
+            </Pressable>
+            <Pressable
+              onPress={() => handleDeletePress(source)}
+              hitSlop={12}
+            >
+              <Ionicons name="trash-outline" size={20} color="#ff6b6b" />
+            </Pressable>
+          </View>
         </View>
       ))}
+
+      <EditSourceModal
+        visible={editModalVisible}
+        source={sourceToEdit}
+        onClose={handleEditClose}
+        onSourceUpdated={onSourceUpdated}
+      />
     </View>
   );
 };
