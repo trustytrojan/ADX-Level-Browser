@@ -1,51 +1,132 @@
 import { StatusBar } from 'expo-status-bar';
 import { View, ActivityIndicator, AppState, Text, Pressable, Linking, Platform } from 'react-native';
 import { useEffect, useRef, useState } from 'react';
-import type { SongItem } from './types';
+import type { SongItem, AppSettings } from './types';
 import { SearchBar } from './components/SearchBar';
 import { DownloadJobsList } from './components/DownloadJobsList';
 import { SongList } from './components/SongList';
 import { SelectionToolbar } from './components/SelectionToolbar';
 import { HelpModal } from './components/HelpModal';
 import { SettingsModal } from './components/SettingsModal';
-import { useSearch } from './hooks/useSearch';
 import { useDownload } from './hooks/useDownload';
 import { useSelection } from './hooks/useSelection';
 import { resetIntentLock } from './utils/sharing';
 import { styles } from './styles/AppStyles';
-import { loadSongsDatabase, refreshSongsDatabase } from './utils/songsDatabase';
+import { loadNextPage, resetPaginationState, type SourcePaginationState } from './services/sources';
+import { loadSettings, saveSettings } from './services/settings';
 import { Entypo, Ionicons } from '@expo/vector-icons';
 
 export default function App() {
   const [showHelpModal, setShowHelpModal] = useState(false);
   const [showSettingsModal, setShowSettingsModal] = useState(false);
-  const [useRomanizedMetadata, setUseRomanizedMetadata] = useState(false);
+  const [settings, setSettings] = useState<AppSettings>({
+    downloadVideos: true,
+    useRomanizedMetadata: false,
+  });
   const [songs, setSongs] = useState<SongItem[]>([]);
-  const [dbLoading, setDbLoading] = useState(true);
-  const [dbError, setDbError] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const [refreshing, setRefreshing] = useState(false);
+  const [searchText, setSearchText] = useState('');
+  const [paginationState, setPaginationState] = useState<SourcePaginationState>({});
+  const searchTimeout = useRef<NodeJS.Timeout | null>(null);
 
-  // Load songs database on mount
+  // Load settings on mount
   useEffect(() => {
-    loadSongsDatabase()
-      .then((loadedSongs) => {
-        setSongs(loadedSongs);
-        setDbLoading(false);
-      })
+    loadSettings()
+      .then(setSettings)
       .catch((error) => {
-        console.error('Failed to load songs database:', error);
-        setDbError(error.message || 'Failed to load songs database');
-        setDbLoading(false);
+        console.error('Failed to load settings:', error);
       });
   }, []);
 
-  const {
-    searchText,
-    filteredSongs,
-    loading,
-    handleSearch,
-    handleSubmitEditing,
-  } = useSearch(songs);
+  // Load initial page of songs
+  const loadInitialSongs = async (search: string = '') => {
+    setLoading(true);
+    setError(null);
+    
+    try {
+      const initialPagination = resetPaginationState();
+      const result = await loadNextPage(initialPagination, search);
+      setSongs(result.songs);
+      setPaginationState(result.paginationState);
+    } catch (err) {
+      console.error('Failed to load songs:', err);
+      setError(err instanceof Error ? err.message : 'Failed to load songs from sources');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Check if there are more pages to load from any source
+  const hasMorePages = () => {
+    const states = Object.values(paginationState);
+    return states.length === 0 || states.some(state => state.hasMore);
+  };
+
+  // Load more songs (next page)
+  const loadMoreSongs = async () => {
+    const hasMore = hasMorePages();
+    
+    console.log('loadMoreSongs called - hasMore:', hasMore, 'paginationState:', paginationState, 'loadingMore:', loadingMore, 'loading:', loading);
+    
+    if (!hasMore || loadingMore || loading) {
+      return;
+    }
+
+    setLoadingMore(true);
+    try {
+      const result = await loadNextPage(paginationState, searchText);
+      console.log('Loaded more songs:', result.songs.length, 'Updated pagination:', result.paginationState);
+      if (result.songs.length > 0) {
+        setSongs(prev => [...prev, ...result.songs]);
+      }
+      // Always update pagination state, even if no songs returned (to update hasMore flags)
+      setPaginationState(result.paginationState);
+    } catch (err) {
+      console.error('Failed to load more songs:', err);
+    } finally {
+      setLoadingMore(false);
+    }
+  };
+
+  // Initial load
+  useEffect(() => {
+    loadInitialSongs();
+  }, []);
+
+  // Handle search with debounce
+  const handleSearch = (text: string) => {
+    setSearchText(text);
+    
+    // Clear existing timeout
+    if (searchTimeout.current) {
+      clearTimeout(searchTimeout.current);
+    }
+
+    // Set new timeout for 500ms
+    searchTimeout.current = setTimeout(() => {
+      loadInitialSongs(text);
+    }, 500);
+  };
+
+  const handleSubmitEditing = () => {
+    // Clear timeout and search immediately
+    if (searchTimeout.current) {
+      clearTimeout(searchTimeout.current);
+    }
+    loadInitialSongs(searchText);
+  };
+
+  // Cleanup timeout on unmount
+  useEffect(() => {
+    return () => {
+      if (searchTimeout.current) {
+        clearTimeout(searchTimeout.current);
+      }
+    };
+  }, []);
 
   const {
     downloading,
@@ -54,7 +135,7 @@ export default function App() {
     handleDownloads,
     setDownloadedMap,
     handleAppBecameActive,
-  } = useDownload();
+  } = useDownload(settings.downloadVideos);
 
   const {
     isSelectionMode,
@@ -82,7 +163,7 @@ export default function App() {
   }, []);
 
   const handleItemPress = (item: SongItem) => {
-    const songId = item.folderId || item.majdataId || '';
+    const songId = item.id || '';
     if (isSelectionMode) {
       toggleSelection(songId);
     } else {
@@ -91,7 +172,7 @@ export default function App() {
   };
 
   const handleItemLongPress = (item: SongItem) => {
-    const songId = item.folderId || item.majdataId || '';
+    const songId = item.id || '';
     if (!isSelectionMode) {
       enterSelectionMode(songId);
     }
@@ -100,7 +181,7 @@ export default function App() {
   const handleDownloadSelected = () => {
     const selectedIds = getSelectedIds();
     const selectedSongs = songs.filter((song) => {
-      const songId = song.folderId || song.majdataId || '';
+      const songId = song.id || '';
       return selectedIds.includes(songId);
     });
     exitSelectionMode();
@@ -110,15 +191,17 @@ export default function App() {
   const handleRefresh = async () => {
     setRefreshing(true);
     try {
-      const updatedSongs = await refreshSongsDatabase();
-      setSongs(updatedSongs);
-      // console.log('Songs database refreshed successfully');
+      await loadInitialSongs(searchText);
     } catch (error) {
-      console.error('Failed to refresh songs database:', error);
-      // Continue with existing songs on error
+      console.error('Failed to refresh songs:', error);
     } finally {
       setRefreshing(false);
     }
+  };
+
+  const handleSettingsChange = async (newSettings: AppSettings) => {
+    setSettings(newSettings);
+    await saveSettings(newSettings);
   };
 
   return (
@@ -154,33 +237,27 @@ export default function App() {
         onSubmitEditing={handleSubmitEditing}
       />
 
-      {dbLoading && (
+      {loading && (
         <View style={styles.loadingContainer}>
           <ActivityIndicator size="large" color="#007AFF" />
-          <Text style={styles.loadingText}>Loading songs database...</Text>
+          <Text style={styles.loadingText}>Loading songs from sources...</Text>
         </View>
       )}
 
-      {dbError && (
+      {error && (
         <View style={styles.loadingContainer}>
           <View style={styles.errorContainer}>
             <Ionicons name="close-circle" size={24} color="#ff6b6b" style={styles.errorIcon} />
-            <Text style={styles.errorText}>{dbError}</Text>
+            <Text style={styles.errorText}>{error}</Text>
           </View>
           <Text style={styles.errorSubtext}>Please check your connection and restart the app</Text>
-        </View>
-      )}
-
-      {!dbLoading && !dbError && loading && (
-        <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color="#007AFF" />
         </View>
       )}
 
       <DownloadJobsList downloadJobs={downloadJobs} />
 
       <SongList
-        songs={filteredSongs}
+        songs={songs}
         downloading={downloading}
         downloadedMap={downloadedMap}
         isSelectionMode={isSelectionMode}
@@ -190,7 +267,10 @@ export default function App() {
         setDownloadedMap={setDownloadedMap}
         searchText={searchText}
         loading={loading}
-        useRomanizedMetadata={useRomanizedMetadata}
+        loadingMore={loadingMore}
+        hasMore={hasMorePages()}
+        onLoadMore={loadMoreSongs}
+        useRomanizedMetadata={settings.useRomanizedMetadata}
         refreshing={refreshing}
         onRefresh={handleRefresh}
       />
@@ -210,8 +290,8 @@ export default function App() {
 
       <SettingsModal
         visible={showSettingsModal}
-        useRomanizedMetadata={useRomanizedMetadata}
-        onRomanizedMetadataChange={setUseRomanizedMetadata}
+        settings={settings}
+        onSettingsChange={handleSettingsChange}
         onCacheCleared={() => setDownloadedMap({})}
         onClose={() => setShowSettingsModal(false)}
       />

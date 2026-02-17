@@ -1,7 +1,6 @@
 import { Text, View, TouchableOpacity, ActivityIndicator } from 'react-native';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import type { SongItem, DownloadJobItem } from '../types';
-import { isMajdataSong } from '../utils/fileSystem';
 import { styles } from '../styles/AppStyles';
 
 type ElementItem = SongItem | DownloadJobItem;
@@ -18,7 +17,7 @@ interface SongElementProps {
 }
 
 const isSongItem = (item: ElementItem): item is SongItem => {
-  return 'folderId' in item || 'majdataId' in item;
+  return 'id' in item && 'sourceId' in item;
 };
 
 const isDownloadJobItem = (item: ElementItem): item is DownloadJobItem => {
@@ -38,17 +37,14 @@ export const SongElement = ({
   const isSong = isSongItem(item);
   const isJob = isDownloadJobItem(item);
 
-  // Determine majdata status
-  let isMajdata = false;
+  // Determine designer
   let designer = '';
   let romanizedDesigner = '';
 
   if (isSong) {
-    isMajdata = isMajdataSong(item);
     designer = item.designer || '';
     romanizedDesigner = item.romanizedDesigner || '';
   } else if (isJob) {
-    isMajdata = item.isMajdata || false;
     designer = item.designer || '';
     romanizedDesigner = item.romanizedDesigner || '';
   }
@@ -87,6 +83,9 @@ export const SongElement = ({
       rightIcon = <Ionicons name="checkmark-circle" size={20} color="#4caf50" />;
     }
   }
+
+  // Check if song has a designer (for styling purposes)
+  const isMajdata = item.sourceId.includes('majdata');
 
   return (
     <TouchableOpacity

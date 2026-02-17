@@ -1,25 +1,43 @@
-import { Modal, Pressable, Text, View, Switch, ActivityIndicator } from 'react-native';
-import { useState } from 'react';
+import { Modal, Pressable, Text, View, Switch, ActivityIndicator, ScrollView } from 'react-native';
+import { useState, useEffect } from 'react';
 import { styles } from '../styles/AppStyles';
 import { clearDownloadCache } from '../utils/fileSystem';
+import { loadSources, deleteSource } from '../services/sources';
+import { SourcesList } from './SourcesList';
+import { AddSourceModal } from './AddSourceModal';
+import type { AppSettings, Source } from '../types';
 
 interface SettingsModalProps {
   visible: boolean;
-  useRomanizedMetadata: boolean;
-  onRomanizedMetadataChange: (value: boolean) => void;
+  settings: AppSettings;
+  onSettingsChange: (settings: AppSettings) => void;
   onCacheCleared: () => void;
   onClose: () => void;
 }
 
 export const SettingsModal = ({
   visible,
-  useRomanizedMetadata,
-  onRomanizedMetadataChange,
+  settings,
+  onSettingsChange,
   onCacheCleared,
   onClose,
 }: SettingsModalProps) => {
   const [clearingCache, setClearingCache] = useState(false);
   const [cacheCleared, setCacheCleared] = useState(false);
+  const [sources, setSources] = useState<Source[]>([]);
+  const [showAddSourceModal, setShowAddSourceModal] = useState(false);
+
+  // Load sources when modal opens
+  useEffect(() => {
+    if (visible) {
+      loadSources().then(setSources).catch(console.error);
+    }
+  }, [visible]);
+
+  const refreshSources = async () => {
+    const updatedSources = await loadSources();
+    setSources(updatedSources);
+  };
 
   const handleClearCache = async () => {
     setClearingCache(true);
@@ -36,58 +54,102 @@ export const SettingsModal = ({
     }
   };
 
+  const handleToggleRomanized = (value: boolean) => {
+    onSettingsChange({ ...settings, useRomanizedMetadata: value });
+  };
+
+  const handleToggleVideos = (value: boolean) => {
+    onSettingsChange({ ...settings, downloadVideos: value });
+  };
+
+  const handleDeleteSource = async (sourceId: string) => {
+    try {
+      await deleteSource(sourceId);
+      await refreshSources();
+    } catch (error) {
+      console.error('Failed to delete source:', error);
+    }
+  };
+
   return (
-    <Modal
-      visible={visible}
-      animationType="fade"
-      transparent={true}
-      onRequestClose={onClose}
-    >
-      <Pressable style={styles.helpModalOverlay}>
-        <View style={styles.helpModalContent}>
-          <Text style={styles.helpModalTitle}>Settings</Text>
-          
-          <View style={{ marginBottom: 24 }}>
-            <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
-              <Text style={styles.settingsModalText}>Romanized Metadata</Text>
-              <Switch
-                value={useRomanizedMetadata}
-                onValueChange={onRomanizedMetadataChange}
+    <>
+      <Modal
+        visible={visible}
+        animationType="fade"
+        transparent={true}
+        onRequestClose={onClose}
+      >
+        <Pressable style={styles.helpModalOverlay}>
+          <View style={styles.helpModalContent}>
+            <ScrollView showsVerticalScrollIndicator={false}>
+              <Text style={styles.helpModalTitle}>Settings</Text>
+              
+              <View style={{ marginBottom: 24 }}>
+                <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
+                  <Text style={styles.settingsModalText}>Romanized Metadata</Text>
+                  <Switch
+                    value={settings.useRomanizedMetadata}
+                    onValueChange={handleToggleRomanized}
+                  />
+                </View>
+                <Text style={{ color: '#9aa3b2', fontSize: 12, marginBottom: 16 }}>
+                  Display romanized song titles, artists, and designers when available
+                </Text>
+
+                <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
+                  <Text style={styles.settingsModalText}>Download Videos</Text>
+                  <Switch
+                    value={settings.downloadVideos}
+                    onValueChange={handleToggleVideos}
+                  />
+                </View>
+                <Text style={{ color: '#9aa3b2', fontSize: 12 }}>
+                  Download video files (PV) for songs. Disable to save bandwidth and storage.
+                </Text>
+              </View>
+
+              <SourcesList
+                sources={sources}
+                onDelete={handleDeleteSource}
+                onAddPress={() => setShowAddSourceModal(true)}
               />
-            </View>
-            <Text style={{ color: '#9aa3b2', fontSize: 12 }}>
-              Display romanized song titles, artists, and designers when available
-            </Text>
-          </View>
 
-          <View style={{ gap: 8 }}>
-            <Pressable
-              style={[
-                styles.helpModalCloseButton,
-                { backgroundColor: '#ff6b6b' },
-                clearingCache && { opacity: 0.6 },
-              ]}
-              onPress={handleClearCache}
-              disabled={clearingCache}
-            >
-              {clearingCache ? (
-                <ActivityIndicator size="small" color="#fff" />
-              ) : cacheCleared ? (
-                <Text style={styles.helpModalCloseButtonText}>✓ Cache Cleared</Text>
-              ) : (
-                <Text style={styles.helpModalCloseButtonText}>Clear Download Cache</Text>
-              )}
-            </Pressable>
+              <View style={{ gap: 8 }}>
+                <Pressable
+                  style={[
+                    styles.helpModalCloseButton,
+                    { backgroundColor: '#ff6b6b' },
+                    clearingCache && { opacity: 0.6 },
+                  ]}
+                  onPress={handleClearCache}
+                  disabled={clearingCache}
+                >
+                  {clearingCache ? (
+                    <ActivityIndicator size="small" color="#fff" />
+                  ) : cacheCleared ? (
+                    <Text style={styles.helpModalCloseButtonText}>✓ Cache Cleared</Text>
+                  ) : (
+                    <Text style={styles.helpModalCloseButtonText}>Clear Download Cache</Text>
+                  )}
+                </Pressable>
 
-            <Pressable
-              style={styles.helpModalCloseButton}
-              onPress={onClose}
-            >
-              <Text style={styles.helpModalCloseButtonText}>Close</Text>
-            </Pressable>
+                <Pressable
+                  style={styles.helpModalCloseButton}
+                  onPress={onClose}
+                >
+                  <Text style={styles.helpModalCloseButtonText}>Close</Text>
+                </Pressable>
+              </View>
+            </ScrollView>
           </View>
-        </View>
-      </Pressable>
-    </Modal>
+        </Pressable>
+      </Modal>
+
+      <AddSourceModal
+        visible={showAddSourceModal}
+        onClose={() => setShowAddSourceModal(false)}
+        onSourceAdded={refreshSources}
+      />
+    </>
   );
 };

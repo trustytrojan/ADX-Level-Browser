@@ -1,20 +1,42 @@
+/**
+ * Source configuration for a majdata.net-like API endpoint
+ */
+export interface Source {
+  /**
+   * Unique identifier for the source
+   */
+  id: string;
+  /**
+   * Display name for the source
+   */
+  name: string;
+  /**
+   * Base URL of the API endpoint (without trailing slash)
+   * Example: https://majdata.net/api3/api/maichart
+   */
+  baseUrl: string;
+  /**
+   * Whether this source is enabled
+   */
+  enabled: boolean;
+}
+
 export interface Song {
   /**
-   * Google Drive folder ID.
-   * If present, then `majdataId` should not be, and this song is a convert hosted
-   * in the [Google Drive folder](https://drive.google.com/drive/u/0/folders/1NiZ9rL19qKLqt0uNcP5tIqc0fUrksAPs).
+   * Unique song ID from the source API
    */
-  folderId?: string;
+  id: string;
   /**
-   * Majdata song ID.
-   * If present, then `folderId` should not be, and this song is a fanmade chart hosted on [Majdata.net](https://majdata.net).
+   * ID of the source this song comes from
    */
-  majdataId?: string;
+  sourceId: string;
   /**
-   * Zetaraku `songId`. Not present on Majdata songs.
+   * Song title
    */
-  zetarakuId?: string;
   title: string;
+  /**
+   * Song artist
+   */
   artist: string;
   /**
    * Romanized title. Not present if `title` does not contain Japanese characters.
@@ -25,11 +47,11 @@ export interface Song {
    */
   romanizedArtist?: string;
   /**
-   * Also known as "aliases". Sourced from [GCM-Bot](https://github.com/lomotos10/GCM-bot/blob/main/data/aliases/en/maimai.tsv).
+   * Also known as "aliases". Alternative names for the song.
    */
   communityNames?: string[];
   /**
-   * Chart designer name. Not present on convert songs.
+   * Chart designer name.
    */
   designer?: string;
   /**
@@ -46,12 +68,12 @@ export interface DownloadState {
 }
 
 export interface DownloadJobItem {
-  id: string; // Either folderId or majdataId
+  id: string; // Unique song ID
+  sourceId: string; // Source this song comes from
   title: string;
   artist?: string;
   designer?: string;
   romanizedDesigner?: string;
-  isMajdata?: boolean;
   status: 'QUEUED' | 'IN_PROGRESS' | 'COMPLETED';
   percentDone?: number;
 }
@@ -59,4 +81,15 @@ export interface DownloadJobItem {
 export interface SelectionState {
   isSelectionMode: boolean;
   selectedIds: Set<string>;
+}
+
+export interface AppSettings {
+  /**
+   * Whether to download video files for songs
+   */
+  downloadVideos: boolean;
+  /**
+   * Whether to use romanized metadata when available
+   */
+  useRomanizedMetadata: boolean;
 }

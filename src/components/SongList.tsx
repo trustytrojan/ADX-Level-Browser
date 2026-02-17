@@ -1,4 +1,4 @@
-import { Text, FlatList, RefreshControl } from 'react-native';
+import { Text, FlatList, RefreshControl, ActivityIndicator, View } from 'react-native';
 import { useRef } from 'react';
 import type { SongItem, DownloadState } from '../types';
 import { SongListItem } from './SongListItem';
@@ -16,6 +16,9 @@ interface SongListProps {
   setDownloadedMap: React.Dispatch<React.SetStateAction<Record<string, boolean>>>;
   searchText: string;
   loading: boolean;
+  loadingMore: boolean;
+  hasMore: boolean;
+  onLoadMore: () => void;
   refreshing: boolean;
   onRefresh: () => void;
   useRomanizedMetadata: boolean;
@@ -32,6 +35,9 @@ export const SongList = ({
   setDownloadedMap,
   searchText,
   loading,
+  loadingMore,
+  hasMore,
+  onLoadMore,
   refreshing,
   onRefresh,
   useRomanizedMetadata,
@@ -40,7 +46,7 @@ export const SongList = ({
     setDownloadedMap((prev) => {
       let next = prev;
       viewableItems.forEach(({ item }) => {
-        const songId = item.folderId || item.majdataId || '';
+        const songId = item.id || '';
         if (prev[songId] !== undefined) return;
         const file = getFileForSong(item);
         if (file.exists) {
@@ -54,15 +60,32 @@ export const SongList = ({
 
   const viewabilityConfig = useRef({ itemVisiblePercentThreshold: 60 }).current;
 
+  const handleEndReached = () => {
+    console.log('End reached - loading:', loading, 'loadingMore:', loadingMore, 'hasMore:', hasMore, 'songs:', songs.length);
+    // Only load more if there are actually more pages available
+    if (!loading && !loadingMore && hasMore && songs.length > 0) {
+      onLoadMore();
+    }
+  };
+
+  const renderFooter = () => {
+    if (!loadingMore) return null;
+    return (
+      <View style={{ padding: 16, alignItems: 'center' }}>
+        <ActivityIndicator size="small" color="#007AFF" />
+      </View>
+    );
+  };
+
   return (
     <>
       <Text style={styles.sectionLabel}>Song List</Text>
       <FlatList
         style={styles.songsList}
         data={songs}
-        keyExtractor={(item) => item.folderId || item.majdataId || ''}
+        keyExtractor={(item) => `${item.sourceId}:${item.id}`}
         renderItem={({ item }) => {
-          const songId = item.folderId || item.majdataId || '';
+          const songId = item.id || '';
           return (
             <SongListItem
               item={item}
@@ -81,8 +104,15 @@ export const SongList = ({
             <Text style={styles.emptyText}>No songs found</Text>
           ) : null
         }
+        ListFooterComponent={renderFooter}
         onViewableItemsChanged={viewableItemsChanged.current}
         viewabilityConfig={viewabilityConfig}
+        onEndReached={handleEndReached}
+        onEndReachedThreshold={0.3}
+        maintainVisibleContentPosition={{
+          minIndexForVisible: 0,
+        }}
+        removeClippedSubviews={false}
         refreshControl={
           <RefreshControl
             refreshing={refreshing}

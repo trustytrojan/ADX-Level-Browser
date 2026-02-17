@@ -1,7 +1,20 @@
-# adx-convert-browser
-A React Native/Expo app to have an all-in-one interface for searching and downloading songs/charts compatible with AstroDX.
+# adx-level-browser
+A React Native/Expo app to have an all-in-one interface for searching, downloading, and importing levels for AstroDX.
 
-The song database (`songs.json`) is built with the scripts in [adx-convert-db](https://github.com/trustytrojan/adx-convert-db). On first launch, the app downloads the latest `songs.json` from that repository and stores it in the app's private data directory. This allows the database to be updated independently of the app itself.
+## Architecture
+
+The app now uses a **source-based architecture** that supports multiple level sources with a majdata.net-like API interface. Songs are loaded from configurable sources stored in `sources.json` in the app's private data directory.
+
+For backwards compatibility, the existing database is automatically loaded as a "legacy-db" source on first launch. See [MIGRATION.md](MIGRATION.md) for details on the architectural changes.
+
+## Features
+
+- **Multiple Sources**: Add and manage multiple level sources
+- **Video Downloads**: Optional video downloads to save bandwidth and storage
+- **Romanized Metadata**: Display romanized titles/artists when available
+- **Selection Mode**: Download multiple songs at once
+- **Download Cache**: Avoid re-downloading songs you already have
+- **Direct Import**: Downloads open directly in AstroDX
 
 ## Installing/Running the app
 
@@ -30,6 +43,18 @@ Since I don't own a new enough Mac, and I don't want to give Apple my personal i
 █▄▄▄▄▄▄▄█▄▄▄███▄▄███▄▄▄▄█▄▄████
 ```
 
+## API Requirements for Custom Sources
+
+To add a custom source, it must implement the following majdata.net-like API:
+
+- `GET /list?page={page}&search={search}` - List/search songs
+- `GET /{id}/track` - Download MP3 audio
+- `GET /{id}/image` - Download JPG/PNG image
+- `GET /{id}/chart` - Download TXT chart file
+- `GET /{id}/video` - Download MP4 video (optional)
+
+See [MIGRATION.md](MIGRATION.md) for detailed API specifications and examples.
+
 ## Development
 Have Node.js and NPM installed, then run `npm i`. Run the Expo dev server with `npx expo`.
 
@@ -43,10 +68,5 @@ I only built an APK on Linux, but given that Android tooling is available for al
    ```
 3. Run `expo prebuild -p android` to let Expo generate the Android build environment.
 4. Run `cd android` then `./gradlew assemble`. The APK is located at `android/app/build/outputs/apk/release/app-release.apk` relative to the project root.
-
-## To-Do List
-- Expand the app to list & download fanmade charts with the [Majdata-Online](https://majdata.net/) API
-  - Base URL: `https://majdata.net/api3/api/maichart`
-  - List/Search endpoint: `/list?sort=<|likep|commp|playp>&page=0&search=<query>`
   - Download endpoints: `/<song-id>/<track|chart|video>`
 - Maybe switch to [NativeScript](https://nativescript.org/) once you're familiar with it, though this will be a big workload

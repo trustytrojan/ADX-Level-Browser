@@ -195,8 +195,19 @@ export const styles = StyleSheet.create({
     backgroundColor: '#1b1f2a',
     borderRadius: 12,
     padding: 20,
-    marginHorizontal: 20,
-    maxWidth: 400,
+    
+    // Limits horizontal growth on large screens
+    maxWidth: 400, 
+    
+    // Limits horizontal growth on small screens (keeps it from touching edges)
+    width: '90%', 
+    
+    // Forces the modal to only be as tall as its children
+    // If it's still too long, check if a child has { flex: 1 }
+    alignSelf: 'center', 
+    
+    // Safety check: prevents it from bleeding off the top/bottom
+    maxHeight: '80%', 
   },
   helpModalTitle: {
     fontSize: 18,

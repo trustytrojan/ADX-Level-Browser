@@ -22,7 +22,7 @@ export const SongListItem = ({
   onLongPress,
   useRomanizedMetadata,
 }: SongListItemProps) => {
-  const id = item.folderId || item.majdataId;
+  const id = item.id;
   const isDownloading = downloading[id!];
 
   return (
