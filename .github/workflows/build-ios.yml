@@ -24,6 +24,9 @@ jobs:
 
       - name: Prebuild for iOS
         run: npx expo prebuild -p ios
+      
+      - name: Install iOS Pods
+        run: cd ios && pod install
 
       - name: Clone build scripts
         run: git clone https://github.com/JustFrederik/Compile-to-ipa-without-developer-account.git build-scripts
@@ -32,7 +35,10 @@ jobs:
         run: chmod +x build-scripts/*.sh
 
       - name: Build and create IPA
-        run: ./build-scripts/workspace_build.sh ./ios
+        run: ./build-scripts/project_build.sh ./ios/ADXLevels.xcodeproj
+
+      - name: Find and verify IPA
+        run: find . -name '*.ipa' -type f
 
       - name: Upload IPA artifact
         uses: actions/upload-artifact@v4
