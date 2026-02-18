@@ -1,0 +1,40 @@
+name: Build Expo iOS IPA
+
+on:
+  push:
+    paths-ignore:
+      - '*.md'
+      - '*.txt'
+
+jobs:
+  build:
+    runs-on: macos-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: 25.6.0
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Prebuild for iOS
+        run: npx expo prebuild -p ios
+
+      - name: Clone build scripts
+        run: git clone https://github.com/JustFrederik/Compile-to-ipa-without-developer-account.git build-scripts
+
+      - name: Make scripts executable
+        run: chmod +x build-scripts/*.sh
+
+      - name: Build and create IPA
+        run: ./build-scripts/workspace_build.sh ./ios
+
+      - name: Upload IPA artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: app.ipa
+          path: ./*.ipa
