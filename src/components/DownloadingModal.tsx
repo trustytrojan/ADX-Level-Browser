@@ -45,8 +45,6 @@ export const DownloadingModal = ({
     };
   }, [isComplete, hasErrors, isCompressing, onComplete]);
 
-  console.log(`[${new Date().toISOString()}] [DownloadingModal] downloadJobs:`, downloadJobs.map(({ title }) => title));
-
   return (
     <Modal
       visible={visible}

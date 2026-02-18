@@ -77,8 +77,6 @@ export default function App() {
   const loadMoreSongs = async () => {
     const hasMore = hasMorePages();
     
-    // console.log('loadMoreSongs called - hasMore:', hasMore, 'paginationState:', paginationState, 'loadingMore:', loadingMore, 'loading:', loading);
-    
     if (!hasMore || loadingMore || loading) {
       return;
     }
@@ -86,7 +84,6 @@ export default function App() {
     setLoadingMore(true);
     try {
       const result = await loadNextPage(paginationState, searchText);
-      // console.log('Loaded more songs:', result.songs.length, 'Updated pagination:', result.paginationState);
       if (result.songs.length > 0) {
         // Deduplicate songs by their unique key (sourceId:id)
         setSongs(prev => {
@@ -150,8 +147,6 @@ export default function App() {
     getCompletedFiles,
     clearDownloads,
   } = useDownload(settings.downloadVideos);
-
-  console.log(`[${new Date().toISOString()}] [App] downloadJobs:`, downloadJobs.map(({ title }) => title));
 
   // App state tracking
   useEffect(() => {

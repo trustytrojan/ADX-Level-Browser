@@ -214,8 +214,6 @@ export async function loadNextPage(
 
       const sourceState = updatedPagination[source.id];
 
-      // console.log(`[loadNextPage] sourceState:`, sourceState);
-
       // Skip if no more pages
       if (!sourceState.hasMore) {
         return;
@@ -233,7 +231,6 @@ export async function loadNextPage(
             hasMore: true, // We got results, so there might be more
           };
         } else {
-          // console.log(`[loadNextPage] empty array`);
           // No songs returned (empty array []), mark as no more pages
           updatedPagination[source.id] = {
             ...sourceState,
@@ -251,8 +248,6 @@ export async function loadNextPage(
       }
     })
   );
-
-  // console.log(`[loadNextPage] updatedPagination:`, updatedPagination);
 
   return { songs: newSongs, paginationState: updatedPagination };
 }

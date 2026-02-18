@@ -89,18 +89,9 @@ export const SettingsModal = ({
       >
         <Pressable 
           style={styles.helpModalOverlay}
-          onPress={() => console.log('[SettingsModal] Overlay Pressable onPress')}
-          onPressIn={() => console.log('[SettingsModal] Overlay Pressable onPressIn')}
         >
           <View 
             style={styles.helpModalContent}
-            onStartShouldSetResponder={() => {
-              console.log('[SettingsModal] Content View onStartShouldSetResponder');
-              return true;
-            }}
-            onResponderRelease={() => {
-              console.log('[SettingsModal] Content View onResponderRelease');
-            }}
           >
             <ScrollView showsVerticalScrollIndicator={false}>
               <Text style={styles.helpModalTitle}>Settings</Text>

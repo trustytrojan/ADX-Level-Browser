@@ -373,7 +373,7 @@ export const styles = StyleSheet.create({
     bottom: 20,
     right: 20,
     left: 20,
-    backgroundColor: '#4caf50',
+    backgroundColor: '#007AFF',
     borderRadius: 28,
     paddingVertical: 16,
     paddingHorizontal: 24,

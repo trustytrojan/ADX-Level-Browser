@@ -61,12 +61,10 @@ export const useDownload = (downloadVideos: boolean = true) => {
   };
 
   const downloadSingleSong = (item: SongItem) => {
-    console.log(`[${new Date().toISOString()}] [downloadSingleSong] called for item id=${item.id} title='${item.title}'`);
     const file = getFileForSong(item);
     const songId = getSongId(item);
 
     // Update to IN_PROGRESS immediately
-    console.log(`[${new Date().toISOString()}] [downloadSingleSong] setDownloadJobs started marking IN_PROGRESS`);
     setDownloadJobs((prev) =>
       prev.map((entry) =>
         entry.id === songId
@@ -74,11 +72,9 @@ export const useDownload = (downloadVideos: boolean = true) => {
           : entry
       )
     );
-    console.log(`[${new Date().toISOString()}] [downloadSingleSong] setDownloadJobs finished marking IN_PROGRESS`);
 
     return downloadSong(item, file, downloadVideos).then(() => {
       // Update to COMPLETED
-      console.log(`[${new Date().toISOString()}] [downloadSingleSong] setDownloadJobs started marking COMPLETED`);
       setDownloadJobs((prev) =>
         prev.map((entry) =>
           entry.id === songId
@@ -86,7 +82,6 @@ export const useDownload = (downloadVideos: boolean = true) => {
             : entry
         )
       );
-      console.log(`[${new Date().toISOString()}] [downloadSingleSong] setDownloadJobs finished marking COMPLETED`);
     }).catch(error => {
       console.error('Download error:', error);
       setHasErrors(true);

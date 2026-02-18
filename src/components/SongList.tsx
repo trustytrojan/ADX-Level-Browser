@@ -55,7 +55,6 @@ export const SongList = ({
   const viewabilityConfig = useRef({ itemVisiblePercentThreshold: 60 }).current;
 
   const handleEndReached = () => {
-    // console.log('End reached - loading:', loading, 'loadingMore:', loadingMore, 'hasMore:', hasMore, 'songs:', songs.length);
     // Only load more if there are actually more pages available
     if (!loading && !loadingMore && hasMore && songs.length > 0) {
       onLoadMore();
