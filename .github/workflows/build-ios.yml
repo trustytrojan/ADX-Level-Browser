@@ -23,7 +23,7 @@ jobs:
         run: npm install
 
       - name: Build for iOS
-        uses: npx expo run:ios --configuration Release
+        run: npx expo run:ios --configuration Release
 
       # - name: Prebuild for iOS
       #   run: npx expo prebuild -p ios --clean
