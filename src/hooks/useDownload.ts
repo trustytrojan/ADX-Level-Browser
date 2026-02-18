@@ -1,248 +1,161 @@
-import { useState, useRef } from 'react';
-import { Alert } from 'react-native';
+import { useSyncExternalStore, useRef, useCallback } from 'react';
 import { File } from 'expo-file-system';
-import type { SongItem, DownloadState, DownloadJobItem } from '../types';
+import type { SongItem, DownloadJobItem } from '../types';
 import { getFileForSong } from '../utils/fileSystem';
-import { openWithAstroDX, openMultipleWithAstroDX } from '../utils/sharing';
 import { downloadSong } from '../services/download';
-
-const DOWNLOAD_TIMEOUT_MS = 90000;
-const DOWNLOAD_TIMEOUT_MESSAGE = 'Download timed out (90s limit)';
 
 type CompletedFileItem = {
   file: File;
   title: string;
 };
 
+// Create a simple store for download jobs
+const createStore = <T,>(initialValue: T) => {
+  let state = initialValue;
+  const listeners = new Set<() => void>();
+  
+  return {
+    getState: () => state,
+    setState: (newState: T | ((prev: T) => T)) => {
+      state = typeof newState === 'function' ? (newState as (prev: T) => T)(state) : newState;
+      listeners.forEach(listener => listener());
+    },
+    subscribe: (listener: () => void) => {
+      listeners.add(listener);
+      return () => listeners.delete(listener);
+    },
+  };
+};
+
 export const useDownload = (downloadVideos: boolean = true) => {
-  const [downloadJobs, setDownloadJobs] = useState<DownloadJobItem[]>([]);
-  const [downloadedMap, setDownloadedMap] = useState<Record<string, boolean>>({});
-  const [showCompressionLoading, setShowCompressionLoading] = useState(false);
-  const totalDownloadsRef = useRef<number>(0);
-  const completedDownloadsRef = useRef<number>(0);
-  const batchCompletedFilesRef = useRef<CompletedFileItem[]>([]);
-  const shouldClearOnNextActiveRef = useRef<boolean>(false);
+  const downloadJobsStore = useRef(createStore<DownloadJobItem[]>([])).current;
+  const hasErrorsStore = useRef(createStore<boolean>(false)).current;
+  
+  /*
+  WE MUST USE useSyncExternalStore INSTEAD OF useState TO AVOID REACT'S AUTOMATIC BATCHING!
+  THIS FORCES A RENDER ON ANY UPDATE TO THESE VALUES!  
+  */
+
+  const downloadJobs = useSyncExternalStore(
+    downloadJobsStore.subscribe,
+    downloadJobsStore.getState
+  );
+  
+  const hasErrors = useSyncExternalStore(
+    hasErrorsStore.subscribe,
+    hasErrorsStore.getState
+  );
+  
+  const setDownloadJobs = useCallback((
+    updater: DownloadJobItem[] | ((prev: DownloadJobItem[]) => DownloadJobItem[])
+  ) => {
+    downloadJobsStore.setState(updater);
+  }, [downloadJobsStore]);
+  
+  const setHasErrors = useCallback((value: boolean) => {
+    hasErrorsStore.setState(value);
+  }, [hasErrorsStore]);
 
   const getSongId = (item: SongItem): string => {
     return item.id || '';
   };
 
-  const getDownloadTimeout = () => {
-    return setTimeout(() => {
-      throw new Error(DOWNLOAD_TIMEOUT_MESSAGE);
-    }, DOWNLOAD_TIMEOUT_MS);
-  };
-
-  const addDownloadJobIfMissing = (songId: string, item: SongItem) => {
-    setDownloadJobs((prev) => {
-      const exists = prev.some((job) => job.id === songId);
-      if (exists) {
-        return prev;
-      }
-
-      return [
-        ...prev,
-        {
-          id: songId,
-          sourceId: item.sourceId,
-          title: item.title,
-          artist: item.artist,
-          designer: item.designer,
-          romanizedDesigner: item.romanizedDesigner,
-          status: 'QUEUED',
-        },
-      ];
-    });
-  };
-
-  const updateDownloadJob = (
-    songId: string,
-    updater: (entry: DownloadJobItem) => DownloadJobItem
-  ) => {
-    setDownloadJobs((prev) =>
-      prev.map((entry) => (entry.id === songId ? updater(entry) : entry))
-    );
-  };
-
-  const addCompletedFile = (file: File, title: string) => {
-    batchCompletedFilesRef.current.push({ file, title });
-  };
-
-  // Derived state: track which songs are currently downloading
-  const downloading: DownloadState = downloadJobs.reduce((acc, job) => {
-    if (job.status !== 'COMPLETED') {
-      acc[job.id] = true;
-    }
-    return acc;
-  }, {} as DownloadState);
-
-  const downloadSingleSong = async (item: SongItem) => {
+  const downloadSingleSong = (item: SongItem) => {
+    console.log(`[${new Date().toISOString()}] [downloadSingleSong] called for item id=${item.id} title='${item.title}'`);
     const file = getFileForSong(item);
     const songId = getSongId(item);
 
-    addDownloadJobIfMissing(songId, item);
+    // Update to IN_PROGRESS immediately
+    console.log(`[${new Date().toISOString()}] [downloadSingleSong] setDownloadJobs started marking IN_PROGRESS`);
+    setDownloadJobs((prev) =>
+      prev.map((entry) =>
+        entry.id === songId
+          ? { ...entry, status: 'IN_PROGRESS' as const, percentDone: 0 }
+          : entry
+      )
+    );
+    console.log(`[${new Date().toISOString()}] [downloadSingleSong] setDownloadJobs finished marking IN_PROGRESS`);
 
-    try {
-      const timeoutId = getDownloadTimeout();
-
-      try {
-        updateDownloadJob(songId, (entry) => ({ ...entry, status: 'IN_PROGRESS' }));
-
-        await downloadSong(item, file, downloadVideos);
-
-        clearTimeout(timeoutId);
-        setDownloadedMap((prev) => ({ ...prev, [songId]: true }));
-        addCompletedFile(file, item.title);
-      } catch (error) {
-        clearTimeout(timeoutId);
-        throw error;
-      }
-
-      handleDownloadComplete(songId);
-    } catch (error) {
-      console.error('Error:', error);
-      handleDownloadError(error, songId);
-    }
+    return downloadSong(item, file, downloadVideos).then(() => {
+      // Update to COMPLETED
+      console.log(`[${new Date().toISOString()}] [downloadSingleSong] setDownloadJobs started marking COMPLETED`);
+      setDownloadJobs((prev) =>
+        prev.map((entry) =>
+          entry.id === songId
+            ? { ...entry, status: 'COMPLETED' as const, percentDone: 100 }
+            : entry
+        )
+      );
+      console.log(`[${new Date().toISOString()}] [downloadSingleSong] setDownloadJobs finished marking COMPLETED`);
+    }).catch(error => {
+      console.error('Download error:', error);
+      setHasErrors(true);
+      // Mark as failed by removing from jobs list
+      setDownloadJobs((prev) => prev.filter((entry) => entry.id !== songId));
+    });
   };
 
-  const handleDownloads = async (items: SongItem[]) => {
-    if (items.length === 0) {
-      return;
-    }
+  const startDownloads = async (items: SongItem[]) => {
+    if (items.length === 0) return;
 
-    // Separate already downloaded and to be downloaded
-    const alreadyDownloaded: SongItem[] = [];
-    const itemsToDownload: SongItem[] = [];
+    // Reset state
+    setHasErrors(false);
+
+    // Separate cached and uncached songs
+    const cachedSongs: SongItem[] = [];
+    const uncachedSongs: SongItem[] = [];
 
     items.forEach((item) => {
       const file = getFileForSong(item);
       if (file.exists) {
-        alreadyDownloaded.push(item);
+        cachedSongs.push(item);
       } else {
-        itemsToDownload.push(item);
+        uncachedSongs.push(item);
       }
     });
 
-    // All songs are already downloaded
-    if (itemsToDownload.length === 0 && alreadyDownloaded.length > 0) {
-      const files = alreadyDownloaded.map(getFileForSong);
-      if (files.length === 1)
-        openWithAstroDX(files[0], alreadyDownloaded[0].title).catch((error) => {
-          console.error('Error sending files to AstroDX:', error);
-        });
-      else
-        openMultipleWithAstroDX(
-          files,
-          () => setShowCompressionLoading(true),
-          () => setShowCompressionLoading(false)
-        ).catch((error) => {
-          console.error('Error sending files to AstroDX:', error);
-          setShowCompressionLoading(false);
-        });
-    }
+    // Initialize download jobs for ALL songs
+    const jobs: DownloadJobItem[] = items.map((item) => ({
+      ...(cachedSongs.some((song) => getSongId(song) === getSongId(item))
+        ? { status: 'COMPLETED' as const, percentDone: 100 }
+        : { status: 'QUEUED' as const, percentDone: 0 }),
+      id: getSongId(item),
+      sourceId: item.sourceId,
+      title: item.title,
+      artist: item.artist,
+      designer: item.designer,
+      romanizedDesigner: item.romanizedDesigner,
+    }));
 
-    // If nothing to download, we're done
-    if (itemsToDownload.length === 0) {
-      if (alreadyDownloaded.length === 0) {
-        Alert.alert('Already Downloaded', 'All selected songs are already downloaded.');
-      }
-      return;
-    }
+    setDownloadJobs(jobs);
 
-    // Initialize or update batch tracking for downloads
-    const hasActiveDownloads = totalDownloadsRef.current > completedDownloadsRef.current;
-    
-    if (hasActiveDownloads) {
-      // Add to existing batch (individual songs tapped while downloads in progress)
-      totalDownloadsRef.current += itemsToDownload.length;
-    } else {
-      // Start new batch
-      totalDownloadsRef.current = itemsToDownload.length;
-      completedDownloadsRef.current = 0;
-      batchCompletedFilesRef.current = [];
-    }
-
-    // Start all downloads
-    itemsToDownload.forEach((item) => {
-      downloadSingleSong(item);
-    });
+    // Start downloads for uncached songs in parallel
+    uncachedSongs.forEach(downloadSingleSong);
   };
 
-  const handleDownloadComplete = (songId: string) => {
-    completedDownloadsRef.current += 1;
-    setDownloadJobs((prev) =>
-      prev.map((entry) =>
-        entry.id === songId
-          ? { ...entry, status: 'COMPLETED', percentDone: 100 }
-          : entry
-      )
-    );
-
-    // Check if all downloads are complete
-    if (completedDownloadsRef.current === totalDownloadsRef.current) {
-      // All downloads complete - open all accumulated files
-      const files = batchCompletedFilesRef.current.map(f => f.file);
-      const batchTitles = batchCompletedFilesRef.current.map(f => f.title);
-      
-      // Snapshot the batch before clearing to prevent interference from new downloads
-      const filesToOpen = [...files];
-      const titlesToOpen = [...batchTitles];
-      
-      if (filesToOpen.length === 1) {
-        openWithAstroDX(filesToOpen[0], titlesToOpen[0]).catch(console.error);
-      } else if (filesToOpen.length > 1) {
-        openMultipleWithAstroDX(
-          filesToOpen,
-          () => setShowCompressionLoading(true),
-          () => setShowCompressionLoading(false)
-        ).catch((error) => {
-          console.error('Error sending files to AstroDX:', error);
-          setShowCompressionLoading(false);
-        });
-      } else {
-        console.warn(`[handleDownloadComplete] No files to open despite completion!`);
-      }
-      
-      // Clear the batch after snapshotting
-      batchCompletedFilesRef.current = [];
-      totalDownloadsRef.current = 0;
-      completedDownloadsRef.current = 0;
-      if (filesToOpen.length > 0) {
-        shouldClearOnNextActiveRef.current = true;
-      }
-    }
+  const getCompletedFiles = (): CompletedFileItem[] => {
+    return downloadJobs
+      .filter((job) => job.status === 'COMPLETED')
+      .map((job) => {
+        const file = getFileForSong({ id: job.id, sourceId: job.sourceId } as SongItem);
+        return { file, title: job.title };
+      });
   };
 
-  const handleDownloadError = (error: unknown, songId: string) => {
-    console.error('Error:', error);
-    completedDownloadsRef.current += 1;
-    const errorMessage = error instanceof Error 
-      ? (error.name === 'AbortError' ? DOWNLOAD_TIMEOUT_MESSAGE : error.message)
-      : 'An unknown error occurred';
-    Alert.alert('Error', errorMessage);
-
-    setDownloadJobs((prev) => prev.filter((entry) => entry.id !== songId));
-  };
-
-
-  const handleAppBecameActive = () => {
-    if (!shouldClearOnNextActiveRef.current) return;
-    const hasActiveJobs = downloadJobs.some((job) => job.status !== 'COMPLETED');
-    if (hasActiveJobs) return;
-
+  const clearDownloads = () => {
     setDownloadJobs([]);
-    shouldClearOnNextActiveRef.current = false;
-    totalDownloadsRef.current = 0;
-    completedDownloadsRef.current = 0;
+    setHasErrors(false);
   };
+
+  const isDownloading = downloadJobs.length > 0 && 
+    downloadJobs.some(job => job.status !== 'COMPLETED');
 
   return {
-    downloading,
     downloadJobs,
-    downloadedMap,
-    showCompressionLoading,
-    handleDownloads,
-    setDownloadedMap,
-    handleAppBecameActive,
+    hasErrors,
+    isDownloading,
+    startDownloads,
+    getCompletedFiles,
+    clearDownloads,
   };
 };

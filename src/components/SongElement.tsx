@@ -8,12 +8,9 @@ type ElementItem = SongItem | DownloadJobItem;
 
 interface SongElementProps {
   item: ElementItem;
-  downloading?: boolean; // For SongItem
   downloaded?: boolean; // For SongItem
-  isSelectionMode?: boolean;
   isSelected?: boolean;
   onPress?: (item: ElementItem) => void;
-  onLongPress?: (item: ElementItem) => void;
   useRomanizedMetadata?: boolean;
 }
 
@@ -27,12 +24,9 @@ const isDownloadJobItem = (item: ElementItem): item is DownloadJobItem => {
 
 export const SongElement = memo(({
   item,
-  downloading = false,
   downloaded = false,
-  isSelectionMode = false,
   isSelected = false,
   onPress,
-  onLongPress,
   useRomanizedMetadata = false,
 }: SongElementProps) => {
   const isSong = isSongItem(item);
@@ -74,15 +68,9 @@ export const SongElement = memo(({
         <ActivityIndicator size="small" color="#007AFF" style={styles.downloadIndicator} />
       );
     }
-  } else {
-    // For SongItem, show download/downloaded status
-    if (downloading) {
-      rightIcon = (
-        <ActivityIndicator size="small" color="#007AFF" style={styles.downloadIndicator} />
-      );
-    } else if (downloaded) {
-      rightIcon = <Ionicons name="checkmark-circle" size={20} color="#4caf50" />;
-    }
+  } else if (downloaded) {
+    // For SongItem that's already downloaded
+    rightIcon = <Ionicons name="checkmark-circle" size={20} color="#4caf50" />;
   }
 
   // Check if song has a designer (for styling purposes)
@@ -93,22 +81,16 @@ export const SongElement = memo(({
       style={[
         styles.resultButton,
         isMajdata && styles.resultButtonMajdata,
-        downloading && styles.resultButtonDisabled,
-        isSelectionMode && isSelected && styles.resultButtonSelected,
+        isSelected && styles.resultButtonSelectedNew,
       ]}
       onPress={() => onPress?.(item)}
-      onLongPress={() => onLongPress?.(item)}
-      disabled={downloading && !isSelectionMode}
     >
       <View style={styles.resultContent}>
-        {isSelectionMode && (
-          <View style={styles.selectionCheckbox}>
-            {isSelected && <Ionicons name="checkmark" size={18} color="#007AFF" />}
-          </View>
-        )}
         <View style={styles.resultTextGroup}>
-          <Text style={styles.resultText}>{displayTitle}</Text>
-          <Text style={styles.resultSubtext}>
+          <Text style={[styles.resultText, isSelected && styles.resultTextBold]}>
+            {displayTitle}
+          </Text>
+          <Text style={[styles.resultSubtext, isSelected && styles.resultSubtextBold]}>
             {displayArtist}
             {isMajdata && displayDesigner ? `\nDesigned by: ${displayDesigner}` : ''}
           </Text>

@@ -62,7 +62,7 @@ export const EditSourceModal = ({ visible, source, onClose, onSourceUpdated }: E
   return (
     <Modal
       visible={visible}
-      animationType="fade"
+      animationType="none"
       transparent={true}
       onRequestClose={handleClose}
     >

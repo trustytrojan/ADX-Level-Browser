@@ -83,7 +83,7 @@ export const SettingsModal = ({
     <>
       <Modal
         visible={visible}
-        animationType="fade"
+        animationType="none"
         transparent={true}
         onRequestClose={onClose}
       >

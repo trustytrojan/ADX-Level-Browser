@@ -53,7 +53,7 @@ export const AddSourceModal = ({ visible, onClose, onSourceAdded }: AddSourceMod
   return (
     <Modal
       visible={visible}
-      animationType="fade"
+      animationType="none"
       transparent={true}
       onRequestClose={handleClose}
     >

@@ -131,8 +131,8 @@ export const openMultipleWithAstroDX = async (
       // Show loading modal
       onCompressionStart?.();
 
-      // Give React time to render the modal before starting the synchronous compression
-      await new Promise(resolve => setTimeout(resolve, 300));
+      // Give React a brief moment to render the modal before starting the synchronous compression
+      await new Promise(resolve => setTimeout(resolve, 50));
 
       const finalAdx = fflate.zipSync(decompressedSongFolders);
 

@@ -1,19 +1,14 @@
 import { Text, FlatList, RefreshControl, ActivityIndicator, View } from 'react-native';
-import { useRef, useCallback } from 'react';
-import type { SongItem, DownloadState } from '../types';
+import { useRef, useCallback, useState, useEffect } from 'react';
+import type { SongItem } from '../types';
 import { SongListItem } from './SongListItem';
 import { getFileForSong } from '../utils/fileSystem';
 import { styles } from '../styles/AppStyles';
 
 interface SongListProps {
   songs: SongItem[];
-  downloading: DownloadState;
-  downloadedMap: Record<string, boolean>;
-  isSelectionMode: boolean;
-  isSelected: (id: string) => boolean;
+  isInQueue: (id: string) => boolean;
   onSongPress: (item: SongItem) => void;
-  onSongLongPress: (item: SongItem) => void;
-  setDownloadedMap: React.Dispatch<React.SetStateAction<Record<string, boolean>>>;
   searchText: string;
   loading: boolean;
   loadingMore: boolean;
@@ -26,13 +21,8 @@ interface SongListProps {
 
 export const SongList = ({
   songs,
-  downloading,
-  downloadedMap,
-  isSelectionMode,
-  isSelected,
+  isInQueue,
   onSongPress,
-  onSongLongPress,
-  setDownloadedMap,
   searchText,
   loading,
   loadingMore,
@@ -42,19 +32,23 @@ export const SongList = ({
   onRefresh,
   useRomanizedMetadata,
 }: SongListProps) => {
+  const [downloadedIds, setDownloadedIds] = useState<Set<string>>(new Set());
+
   const viewableItemsChanged = useRef(({ viewableItems }: { viewableItems: Array<{ item: SongItem }> }) => {
-    setDownloadedMap((prev) => {
-      let next = prev;
+    setDownloadedIds((prev) => {
+      let updated = false;
+      const next = new Set(prev);
       viewableItems.forEach(({ item }) => {
         const songId = item.id || '';
-        if (prev[songId] !== undefined) return;
-        const file = getFileForSong(item);
-        if (file.exists) {
-          if (next === prev) next = { ...prev };
-          next[songId] = true;
+        if (!prev.has(songId)) {
+          const file = getFileForSong(item);
+          if (file.exists) {
+            next.add(songId);
+            updated = true;
+          }
         }
       });
-      return next;
+      return updated ? next : prev;
     });
   });
 
@@ -83,17 +77,14 @@ export const SongList = ({
       return (
         <SongListItem
           item={item}
-          downloading={downloading}
-          downloaded={downloadedMap[songId] || false}
-          isSelectionMode={isSelectionMode}
-          isSelected={isSelected(songId)}
+          downloaded={downloadedIds.has(songId)}
+          isInQueue={isInQueue(songId)}
           onPress={onSongPress}
           useRomanizedMetadata={useRomanizedMetadata}
-          onLongPress={onSongLongPress}
         />
       );
     },
-    [downloading, downloadedMap, isSelectionMode, isSelected, onSongPress, onSongLongPress, useRomanizedMetadata]
+    [downloadedIds, isInQueue, onSongPress, useRomanizedMetadata]
   );
 
   return (

@@ -11,7 +11,7 @@ export const HelpModal = ({ visible, onClose }: HelpModalProps) => {
   return (
     <Modal
       visible={visible}
-      animationType="fade"
+      animationType="none"
       transparent={true}
       onRequestClose={onClose}
     >

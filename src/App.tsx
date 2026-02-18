@@ -1,22 +1,21 @@
 import { StatusBar } from 'expo-status-bar';
-import { View, ActivityIndicator, AppState, Text, Pressable, Linking, Platform } from 'react-native';
+import { View, ActivityIndicator, AppState, Text, Pressable, Linking, Platform, TouchableOpacity } from 'react-native';
 import { useEffect, useRef, useState, useCallback } from 'react';
 import type { SongItem, AppSettings } from './types';
 import { SearchBar } from './components/SearchBar';
-import { DownloadJobsList } from './components/DownloadJobsList';
 import { SongList } from './components/SongList';
-import { SelectionToolbar } from './components/SelectionToolbar';
 import { HelpModal } from './components/HelpModal';
 import { SettingsModal } from './components/SettingsModal';
 import { AddSourceModal } from './components/AddSourceModal';
-import { CompressionLoadingModal } from './components/CompressionLoadingModal';
+import { DownloadingModal } from './components/DownloadingModal';
+import { ReviewSelectionModal } from './components/ReviewSelectionModal';
 import { useDownload } from './hooks/useDownload';
-import { useSelection } from './hooks/useSelection';
 import { resetIntentLock } from './utils/sharing';
+import { openWithAstroDX, openMultipleWithAstroDX } from './utils/sharing';
 import { styles } from './styles/AppStyles';
 import { loadNextPage, resetPaginationState, type SourcePaginationState } from './services/sources';
 import { loadSettings, saveSettings } from './services/settings';
-import { Entypo, Ionicons } from '@expo/vector-icons';
+import { Entypo, Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 
 export default function App() {
   const [showHelpModal, setShowHelpModal] = useState(false);
@@ -35,6 +34,10 @@ export default function App() {
   const [refreshing, setRefreshing] = useState(false);
   const [searchText, setSearchText] = useState('');
   const [paginationState, setPaginationState] = useState<SourcePaginationState>({});
+  const [toDownload, setToDownload] = useState<Set<string>>(new Set());
+  const [showReviewSelectionModal, setShowReviewSelectionModal] = useState(false);
+  const [showDownloadingModal, setShowDownloadingModal] = useState(false);
+  const [isCompressing, setIsCompressing] = useState(false);
   const searchTimeout = useRef<NodeJS.Timeout | null>(null);
 
   // Load settings on mount
@@ -141,24 +144,14 @@ export default function App() {
   }, []);
 
   const {
-    downloading,
     downloadJobs,
-    downloadedMap,
-    showCompressionLoading,
-    handleDownloads,
-    setDownloadedMap,
-    handleAppBecameActive,
+    hasErrors,
+    startDownloads,
+    getCompletedFiles,
+    clearDownloads,
   } = useDownload(settings.downloadVideos);
 
-  const {
-    isSelectionMode,
-    enterSelectionMode,
-    exitSelectionMode,
-    toggleSelection,
-    isSelected,
-    getSelectedCount,
-    getSelectedIds,
-  } = useSelection();
+  console.log(`[${new Date().toISOString()}] [App] downloadJobs:`, downloadJobs.map(({ title }) => title));
 
   // App state tracking
   useEffect(() => {
@@ -166,7 +159,6 @@ export default function App() {
       if (nextAppState === 'active') {
         // Reset intent lock when app comes to foreground
         resetIntentLock();
-        handleAppBecameActive();
       }
     });
 
@@ -177,28 +169,78 @@ export default function App() {
 
   const handleItemPress = useCallback((item: SongItem) => {
     const songId = item.id || '';
-    if (isSelectionMode) {
-      toggleSelection(songId);
-    } else {
-      handleDownloads([item]);
-    }
-  }, [isSelectionMode, toggleSelection, handleDownloads]);
-
-  const handleItemLongPress = useCallback((item: SongItem) => {
-    const songId = item.id || '';
-    if (!isSelectionMode) {
-      enterSelectionMode(songId);
-    }
-  }, [isSelectionMode, enterSelectionMode]);
-
-  const handleDownloadSelected = () => {
-    const selectedIds = getSelectedIds();
-    const selectedSongs = songs.filter((song) => {
-      const songId = song.id || '';
-      return selectedIds.includes(songId);
+    setToDownload((prev) => {
+      const next = new Set(prev);
+      if (next.has(songId)) {
+        next.delete(songId);
+      } else {
+        next.add(songId);
+      }
+      return next;
     });
-    exitSelectionMode();
-    handleDownloads(selectedSongs);
+  }, []);
+
+  const handleRemoveSong = (songId: string) => {
+    setToDownload((prev) => {
+      const next = new Set(prev);
+      next.delete(songId);
+      return next;
+    });
+  };
+
+  const handleClearSelection = () => {
+    setToDownload(new Set());
+    setShowReviewSelectionModal(false);
+  };
+
+  const handleReviewSelection = () => {
+    setShowReviewSelectionModal(true);
+  };
+
+  const handleStartDownload = () => {
+    setShowReviewSelectionModal(false);
+    const songsToDownload = songs.filter((song) => toDownload.has(song.id || ''));
+    if (songsToDownload.length === 0) return;
+
+    setShowDownloadingModal(true);
+    startDownloads(songsToDownload);
+  };
+
+  const handleDownloadComplete = () => {
+    setToDownload(new Set());
+
+    const completedFiles = getCompletedFiles();
+    
+    if (completedFiles.length === 0) {
+      setShowDownloadingModal(false);
+      clearDownloads();
+      return;
+    }
+
+    const files = completedFiles.map(f => f.file);
+    const titles = completedFiles.map(f => f.title);
+
+    if (files.length === 1) {
+      setShowDownloadingModal(false);
+      openWithAstroDX(files[0], titles[0])
+        .catch(console.error)
+        .finally(() => clearDownloads());
+    } else if (files.length > 1) {
+      setIsCompressing(true);
+      openMultipleWithAstroDX(
+        files,
+        () => {}, // onCompressionStart - no-op, we're already showing UI
+        () => {} // onCompressionEnd - no-op, we'll handle it here
+      )
+        .catch((error) => {
+          console.error('Error sending files to AstroDX:', error);
+        })
+        .finally(() => {
+          setIsCompressing(false);
+          setShowDownloadingModal(false);
+          clearDownloads();
+        });
+    }
   };
 
   const handleRefresh = async () => {
@@ -220,29 +262,21 @@ export default function App() {
   const handleSourceAdded = () => {
     setSourcesVersion(v => v + 1);
     setShowAddSourceModal(false);
-    // Return to settings modal after a short delay
-    setTimeout(() => {
-      setShouldReturnToSettings(false);
-      setShowSettingsModal(true);
-    }, 300);
+    setShouldReturnToSettings(false);
+    setShowSettingsModal(true);
   };
   
   const handleRequestAddSource = () => {
     setShouldReturnToSettings(true);
     setShowSettingsModal(false);
-    // Wait for settings modal to close before opening add source modal
-    setTimeout(() => {
-      setShowAddSourceModal(true);
-    }, 300);
+    setShowAddSourceModal(true);
   };
   
   const handleAddSourceClose = () => {
     setShowAddSourceModal(false);
     if (shouldReturnToSettings) {
-      setTimeout(() => {
-        setShouldReturnToSettings(false);
-        setShowSettingsModal(true);
-      }, 300);
+      setShouldReturnToSettings(false);
+      setShowSettingsModal(true);
     }
   };
 
@@ -296,17 +330,10 @@ export default function App() {
         </View>
       )}
 
-      <DownloadJobsList downloadJobs={downloadJobs} />
-
       <SongList
         songs={songs}
-        downloading={downloading}
-        downloadedMap={downloadedMap}
-        isSelectionMode={isSelectionMode}
-        isSelected={isSelected}
+        isInQueue={(id: string) => toDownload.has(id)}
         onSongPress={handleItemPress}
-        onSongLongPress={handleItemLongPress}
-        setDownloadedMap={setDownloadedMap}
         searchText={searchText}
         loading={loading}
         loadingMore={loadingMore}
@@ -317,12 +344,17 @@ export default function App() {
         onRefresh={handleRefresh}
       />
 
-      {isSelectionMode && (
-        <SelectionToolbar
-          selectedCount={getSelectedCount()}
-          onDownload={handleDownloadSelected}
-          onCancel={exitSelectionMode}
-        />
+      {toDownload.size > 0 && !showDownloadingModal && (
+        <TouchableOpacity
+          style={styles.downloadFab}
+          onPress={handleReviewSelection}
+          activeOpacity={0.8}
+        >
+          <MaterialCommunityIcons name="playlist-check" size={24} color="#fff" />
+          <Text style={styles.downloadFabText}>
+            Review selection ({toDownload.size})
+          </Text>
+        </TouchableOpacity>
       )}
 
       <HelpModal
@@ -334,7 +366,7 @@ export default function App() {
         visible={showSettingsModal}
         settings={settings}
         onSettingsChange={handleSettingsChange}
-        onCacheCleared={() => setDownloadedMap({})}
+        onCacheCleared={() => {}}
         onClose={() => setShowSettingsModal(false)}
         sourcesVersion={sourcesVersion}
         onRequestAddSource={handleRequestAddSource}
@@ -346,7 +378,23 @@ export default function App() {
         onSourceAdded={handleSourceAdded}
       />
 
-      <CompressionLoadingModal visible={showCompressionLoading} />
+      <ReviewSelectionModal
+        visible={showReviewSelectionModal}
+        selectedSongs={songs.filter((song) => toDownload.has(song.id || ''))}
+        onRemoveSong={handleRemoveSong}
+        onClearSelection={handleClearSelection}
+        onDownload={handleStartDownload}
+        onClose={() => setShowReviewSelectionModal(false)}
+        useRomanizedMetadata={settings.useRomanizedMetadata}
+      />
+
+      <DownloadingModal
+        visible={showDownloadingModal}
+        downloadJobs={downloadJobs}
+        hasErrors={hasErrors}
+        isCompressing={isCompressing}
+        onComplete={handleDownloadComplete}
+      />
 
       <StatusBar style='light' />
     </View>
