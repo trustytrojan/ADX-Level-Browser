@@ -7,6 +7,9 @@ on:
       - '*.txt'
       - .github/workflows/build-android.yml
 
+env:
+  PROJECT_NAME: ADXLevels
+
 jobs:
   build:
     runs-on: macos-latest
@@ -22,23 +25,25 @@ jobs:
       - name: Install dependencies
         run: npm install
 
-      - name: Build for iOS
-        run: npx expo run:ios --configuration Release
+      - name: Prebuild for iOS
+        run: npx expo prebuild -p ios --clean
 
-      # - name: Prebuild for iOS
-      #   run: npx expo prebuild -p ios --clean
-      
-      # - name: Install iOS Pods
-      #   run: cd ios && pod install --repo-update
+      - name: Install iOS Pods
+        run: cd ios && pod install --repo-update
 
-      # - name: Clone build scripts
-      #   run: git clone https://github.com/JustFrederik/Compile-to-ipa-without-developer-account.git build-scripts
+      - name: Build Xcode project
+        run: |
+          cd ios
+          xcodebuild archive \
+            -scheme $PROJECT_NAME \
+            -configuration release \
+            -archivePath $PROJECT_NAME.xcarchive
 
-      # - name: Make scripts executable
-      #   run: chmod +x build-scripts/*.sh
-
-      # - name: Build and create IPA
-      #   run: ./build-scripts/project_build.sh ./ios/ADXLevels.xcodeproj
+      - name: Download and run `xcarchive_to_ipa.sh`
+        run: |
+          cd ios
+          curl -LO https://github.com/JustFrederik/Compile-to-ipa-without-developer-account/raw/refs/heads/main/xcarchive_to_ipa.sh
+          bash xcarchive_to_ipa.sh $PROJECT_NAME.xcarchive
 
       - name: Find and verify IPA
         run: find . -name '*.ipa' -type f
@@ -47,4 +52,4 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: adx-level-browser-ios
-          path: ./*.ipa
+          path: ./ios/*.ipa
