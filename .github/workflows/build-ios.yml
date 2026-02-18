@@ -38,11 +38,12 @@ jobs:
             -workspace $PROJECT_NAME.xcodeproj/project.xcworkspace \
             -scheme $PROJECT_NAME \
             -configuration Release \
-            -archivePath $PROJECT_NAME.xcarchive
+            -archivePath $PROJECT_NAME.xcarchive \
             CODE_SIGNING_ALLOWED=NO \
             CODE_SIGNING_REQUIRED=NO \
             CODE_SIGN_ENTITLEMENTS="" \
-            CODE_SIGNING_METHOD=manual
+            CODE_SIGNING_METHOD=manual \
+            AD_HOC_CODE_SIGNING_ALLOWED=YES
 
       - name: Download and run `xcarchive_to_ipa.sh`
         run: |
