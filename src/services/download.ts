@@ -60,16 +60,16 @@ export const downloadSong = async (
     if (downloadVideo) {
       const videoPromise = fetch(videoUrl)
         .then(resp => {
+          if (resp.status === 404)
+            return videoFile.exists && videoFile.delete();
           if (!resp.ok)
             throw new Error(`[downloadSong] [${videoUrl}] ${resp.status} ${resp.statusText}`);
           if (resp.headers.get('Content-Type') != 'video/mp4')
             throw new Error(`[downloadSong] [${videoUrl}] Content-Type is not video/mp4`);
-          if (!resp.body)
-            throw new Error(`[downloadSong] [${videoUrl}] resp.body is null`);
-
-          return resp.body.pipeTo(videoFile.writableStream());
-        })
-        .catch();
+          if (resp.bodyUsed)
+            throw new Error(`[downloadSong] [${videoUrl}] resp.bodyUsed`);
+          return resp.arrayBuffer().then(buf => videoFile.write(new Uint8Array(buf)));
+        });
       downloadPromises.push(videoPromise);
     }
 

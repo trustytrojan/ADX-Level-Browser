@@ -1,5 +1,5 @@
 import { Modal, Text, View, ActivityIndicator, ScrollView, TouchableOpacity } from 'react-native';
-import { useEffect, useRef } from 'react';
+import { useEffect } from 'react';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import type { DownloadJobItem } from '../types';
 import { styles } from '../styles/AppStyles';
@@ -28,21 +28,10 @@ export const DownloadingModal = ({
   const completedCount = downloadJobs.filter(job => job.status === 'COMPLETED').length;
   const totalCount = downloadJobs.length;
 
-  // Auto-dismiss after 1 second if complete with no errors
-  const autoDismissTimerRef = useRef<NodeJS.Timeout | null>(null);
-
   useEffect(() => {
     if (isComplete && !hasErrors && !isCompressing) {
-      autoDismissTimerRef.current = setTimeout(() => {
-        onComplete();
-      }, 1000);
+      onComplete();
     }
-
-    return () => {
-      if (autoDismissTimerRef.current) {
-        clearTimeout(autoDismissTimerRef.current);
-      }
-    };
   }, [isComplete, hasErrors, isCompressing, onComplete]);
 
   return (
