@@ -31,25 +31,25 @@ jobs:
       - name: Install iOS Pods
         run: cd ios && pod install --repo-update
 
-      - name: Build Xcode workspace
-        run: |
-          cd ios
-          xcodebuild archive \
-            -workspace $PROJECT_NAME.xcworkspace \
-            -scheme $PROJECT_NAME \
-            -configuration Release \
-            -archivePath $PROJECT_NAME.xcarchive \
-            CODE_SIGNING_ALLOWED=NO \
-            CODE_SIGNING_REQUIRED=NO \
-            CODE_SIGN_ENTITLEMENTS="" \
-            CODE_SIGNING_METHOD=manual \
-            AD_HOC_CODE_SIGNING_ALLOWED=YES
+      # - name: Build Xcode workspace
+      #   run: |
+      #     cd ios
+      #     xcodebuild archive \
+      #       -workspace $PROJECT_NAME.xcworkspace \
+      #       -scheme $PROJECT_NAME \
+      #       -configuration Release \
+      #       -archivePath $PROJECT_NAME.xcarchive \
+      #       CODE_SIGNING_ALLOWED=NO \
+      #       CODE_SIGNING_REQUIRED=NO \
+      #       CODE_SIGN_ENTITLEMENTS="" \
+      #       CODE_SIGNING_METHOD=manual \
+      #       AD_HOC_CODE_SIGNING_ALLOWED=YES
 
       - name: Build Xcode project
         run: |
           cd ios
           xcodebuild archive \
-            -project $PROJECT_NAME.xcodeproj \
+            -project $PROJECT_NAME/$PROJECT_NAME.xcodeproj \
             -scheme $PROJECT_NAME \
             -configuration Release \
             -archivePath $PROJECT_NAME.xcarchive \
