@@ -26,10 +26,7 @@ jobs:
         run: npm install
 
       - name: Prebuild for iOS
-        run: npx expo prebuild -p ios --clean
-
-      - name: Install iOS Pods
-        run: cd ios && pod install --repo-update
+        run: npx expo prebuild -p ios
 
       - name: Build Xcode workspace
         run: |
