@@ -5,6 +5,7 @@ on:
     paths-ignore:
       - '*.md'
       - '*.txt'
+      - .github/workflows/build-android.yml
 
 jobs:
   build:
@@ -34,7 +35,7 @@ jobs:
         run: ./build-scripts/workspace_build.sh ./ios
 
       - name: Upload IPA artifact
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
-          name: app.ipa
+          name: adx-level-browser-ios
           path: ./*.ipa

@@ -5,6 +5,7 @@ on:
     paths-ignore:
       - '*.md'
       - '*.txt'
+      - .github/workflows/build-ios.yml
 
 jobs:
   android:
@@ -30,5 +31,5 @@ jobs:
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
-          name: android-build
+          name: adx-level-browser-android
           path: android/app/build/outputs/apk/release/*.apk
