@@ -1,8 +1,8 @@
 import { Modal, Pressable, Text, View, TextInput, ActivityIndicator, Alert } from 'react-native';
 import { useState, useEffect } from 'react';
-import { styles } from '../styles/AppStyles';
-import { updateSource } from '../services/sources';
-import type { Source } from '../types';
+import { styles } from '../../styles/AppStyles';
+import { updateSource } from '../../services/sources';
+import type { Source } from '../../types';
 
 interface EditSourceModalProps {
   visible: boolean;

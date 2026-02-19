@@ -1,5 +1,5 @@
 import { Modal, Text, View, ActivityIndicator } from 'react-native';
-import { styles } from '../styles/AppStyles';
+import { styles } from '../../styles/AppStyles';
 
 interface ImportingModalProps {
   visible: boolean;

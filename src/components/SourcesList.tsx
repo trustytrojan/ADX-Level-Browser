@@ -2,7 +2,7 @@ import { Text, View, Pressable, Alert } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useState } from 'react';
 import type { Source } from '../types';
-import { EditSourceModal } from './EditSourceModal';
+import { EditSourceModal } from './modals/EditSourceModal';
 
 interface SourcesListProps {
   sources: Source[];

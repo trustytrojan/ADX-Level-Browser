@@ -1,6 +1,6 @@
 import { Modal, Pressable, Text, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { styles } from '../styles/AppStyles';
+import { styles } from '../../styles/AppStyles';
 
 interface HelpModalProps {
   visible: boolean;

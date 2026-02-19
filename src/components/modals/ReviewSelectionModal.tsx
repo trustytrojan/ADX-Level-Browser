@@ -1,7 +1,7 @@
 import { Modal, Text, View, ScrollView, TouchableOpacity } from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
-import type { SongItem } from '../types';
-import { styles } from '../styles/AppStyles';
+import type { SongItem } from '../../types';
+import { styles } from '../../styles/AppStyles';
 
 interface ReviewSelectionModalProps {
   visible: boolean;

@@ -1,38 +1,26 @@
 import { Modal, Text, View, ActivityIndicator, ScrollView, TouchableOpacity } from 'react-native';
-import { useEffect } from 'react';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
-import type { DownloadJobItem } from '../types';
-import { styles } from '../styles/AppStyles';
+import type { DownloadJobItem } from '../../types';
+import { styles } from '../../styles/AppStyles';
 
 interface DownloadingModalProps {
   visible: boolean;
   downloadJobs: DownloadJobItem[];
-  onComplete: () => void;
   hasErrors: boolean;
-  isCompressing: boolean;
+  onDismiss?: () => void;
 }
 
 export const DownloadingModal = ({
   visible,
   downloadJobs,
-  onComplete,
   hasErrors,
-  isCompressing,
+  onDismiss,
 }: DownloadingModalProps) => {
-  // Check if all downloads are complete
-  const allComplete = downloadJobs.length > 0 && downloadJobs.every(job => job.status === 'COMPLETED');
-  const isComplete = allComplete || hasErrors;
-  const shouldShowCompressing = isComplete && isCompressing && downloadJobs.length > 1;
-  
   // Count completed jobs
   const completedCount = downloadJobs.filter(job => job.status === 'COMPLETED').length;
   const totalCount = downloadJobs.length;
-
-  useEffect(() => {
-    if (isComplete && !hasErrors && !isCompressing) {
-      onComplete();
-    }
-  }, [isComplete, hasErrors, isCompressing, onComplete]);
+  const allComplete = downloadJobs.length > 0 && downloadJobs.every(job => job.status === 'COMPLETED');
+  const isComplete = allComplete || hasErrors;
 
   return (
     <Modal
@@ -41,8 +29,8 @@ export const DownloadingModal = ({
       transparent={true}
       onRequestClose={() => {
         // User cannot close this modal while downloading
-        if (isComplete) {
-          onComplete();
+        if (isComplete && onDismiss) {
+          onDismiss();
         }
       }}
     >
@@ -52,7 +40,7 @@ export const DownloadingModal = ({
           onStartShouldSetResponder={() => true}
         >
           <Text style={styles.downloadingModalTitle}>
-            {isComplete ? 'Importing Levels' : 'Downloading Levels'}
+            Downloading Levels
           </Text>
 
           <Text style={styles.downloadingModalSubtitle}>
@@ -111,19 +99,10 @@ export const DownloadingModal = ({
             })}
           </ScrollView>
 
-          {shouldShowCompressing && (
-            <View style={styles.downloadingModalLoadingContainer}>
-              <Text style={{ color: '#9aa3b2', fontSize: 14, marginBottom: 16, textAlign: 'center' }}>
-                Compressing levels for bulk import...
-              </Text>
-              <ActivityIndicator size="large" color="#007AFF" />
-            </View>
-          )}
-
-          {isComplete && !shouldShowCompressing && hasErrors && (
+          {isComplete && hasErrors && onDismiss && (
             <TouchableOpacity
               style={styles.downloadingModalCompleteButton}
-              onPress={onComplete}
+              onPress={onDismiss}
             >
               <Text style={styles.downloadingModalCompleteButtonText}>Dismiss</Text>
             </TouchableOpacity>
