@@ -1,19 +1,15 @@
 import { Alert, Pressable, Text, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { useState } from 'react';
 import type { Source } from '../types';
-import { EditSourceModal } from './modals/EditSourceModal';
 
 interface SourcesListProps {
   sources: Source[];
   onDelete: (sourceId: string) => void;
   onAddPress: () => void;
-  onSourceUpdated: () => void;
+  onEditPress: (source: Source) => void;
 }
 
-export const SourcesList = ({ sources, onDelete, onAddPress, onSourceUpdated }: SourcesListProps) => {
-  const [editModalVisible, setEditModalVisible] = useState(false);
-  const [sourceToEdit, setSourceToEdit] = useState<Source | null>(null);
+export const SourcesList = ({ sources, onDelete, onAddPress, onEditPress }: SourcesListProps) => {
   const handleDeletePress = (source: Source) => {
     Alert.alert(
       'Delete Source',
@@ -27,16 +23,6 @@ export const SourcesList = ({ sources, onDelete, onAddPress, onSourceUpdated }: 
         },
       ],
     );
-  };
-
-  const handleEditPress = (source: Source) => {
-    setSourceToEdit(source);
-    setEditModalVisible(true);
-  };
-
-  const handleEditClose = () => {
-    setEditModalVisible(false);
-    setSourceToEdit(null);
   };
 
   return (
@@ -75,7 +61,7 @@ export const SourcesList = ({ sources, onDelete, onAddPress, onSourceUpdated }: 
           </View>
           <View style={{ flexDirection: 'row', gap: 12 }}>
             <Pressable
-              onPress={() => handleEditPress(source)}
+              onPress={() => onEditPress(source)}
               hitSlop={12}
             >
               <Ionicons name='pencil-outline' size={20} color='#007AFF' />
@@ -89,13 +75,6 @@ export const SourcesList = ({ sources, onDelete, onAddPress, onSourceUpdated }: 
           </View>
         </View>
       ))}
-
-      <EditSourceModal
-        visible={editModalVisible}
-        source={sourceToEdit}
-        onClose={handleEditClose}
-        onSourceUpdated={onSourceUpdated}
-      />
     </View>
   );
 };

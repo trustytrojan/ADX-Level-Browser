@@ -91,7 +91,9 @@ export const useDownloadFlow = (downloadVideos: boolean) => {
   const dismissDownloading = useCallback(() => {
     setShowDownloadingModal(false);
     setShowCloseOnComplete(false);
-    clearDownloads();
+    setTimeout(() => {
+      clearDownloads();
+    }, 0);
   }, [clearDownloads]);
 
   return {

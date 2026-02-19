@@ -5,11 +5,8 @@ import type { AppSettings, SongItem } from './types';
 import { SearchBar } from './components/SearchBar';
 import { SongList } from './components/SongList';
 import { HelpModal } from './components/modals/HelpModal';
-import { SettingsModal } from './components/modals/SettingsModal';
-import { AddSourceModal } from './components/modals/AddSourceModal';
-import { DownloadingModal } from './components/modals/DownloadingModal';
-import { ImportingModal } from './components/modals/ImportingModal';
-import { ReviewSelectionModal } from './components/modals/ReviewSelectionModal';
+import { SettingsFlowModal } from './components/modals/SettingsFlowModal';
+import { ImportFlowModal } from './components/modals/ImportFlowModal';
 import { useDownloadFlow } from './hooks/useDownloadFlow';
 import { resetIntentLock } from './utils/sharing';
 import { styles } from './styles/AppStyles';
@@ -20,9 +17,6 @@ import { Entypo, Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 export default function App() {
   const [showHelpModal, setShowHelpModal] = useState(false);
   const [showSettingsModal, setShowSettingsModal] = useState(false);
-  const [showAddSourceModal, setShowAddSourceModal] = useState(false);
-  const [shouldReturnToSettings, setShouldReturnToSettings] = useState(false);
-  const [sourcesVersion, setSourcesVersion] = useState(0);
   const [cacheVersion, setCacheVersion] = useState(0);
   const [settings, setSettings] = useState<AppSettings>({
     downloadVideos: true,
@@ -178,13 +172,19 @@ export default function App() {
     setToDownload((prev) => {
       const next = new Set(prev);
       next.delete(songId);
+
+      if (next.size === 0)
+        setShowReviewSelectionModal(false);
+
       return next;
     });
   };
 
   const handleClearSelection = () => {
-    setToDownload(new Set());
     setShowReviewSelectionModal(false);
+    setTimeout(() => {
+      setToDownload(new Set());
+    }, 0);
   };
 
   const handleReviewSelection = () => {
@@ -229,27 +229,6 @@ export default function App() {
 
   const handleCacheCleared = () => {
     setCacheVersion((v) => v + 1);
-  };
-
-  const handleSourceAdded = () => {
-    setSourcesVersion((v) => v + 1);
-    setShowAddSourceModal(false);
-    setShouldReturnToSettings(false);
-    setShowSettingsModal(true);
-  };
-
-  const handleRequestAddSource = () => {
-    setShouldReturnToSettings(true);
-    setShowSettingsModal(false);
-    setShowAddSourceModal(true);
-  };
-
-  const handleAddSourceClose = () => {
-    setShowAddSourceModal(false);
-    if (shouldReturnToSettings) {
-      setShouldReturnToSettings(false);
-      setShowSettingsModal(true);
-    }
   };
 
   return (
@@ -335,44 +314,30 @@ export default function App() {
         onClose={() => setShowHelpModal(false)}
       />
 
-      <SettingsModal
+      <SettingsFlowModal
         visible={showSettingsModal}
         settings={settings}
         onSettingsChange={handleSettingsChange}
         onCacheCleared={handleCacheCleared}
         onClose={() => setShowSettingsModal(false)}
-        sourcesVersion={sourcesVersion}
-        onRequestAddSource={handleRequestAddSource}
       />
 
-      <AddSourceModal
-        visible={showAddSourceModal}
-        onClose={handleAddSourceClose}
-        onSourceAdded={handleSourceAdded}
-      />
-
-      <ReviewSelectionModal
-        visible={showReviewSelectionModal}
+      <ImportFlowModal
+        reviewVisible={showReviewSelectionModal}
+        downloadingVisible={showDownloadingModal}
+        importingVisible={showImportingModal}
         selectedSongs={songs.filter((song) => toDownload.has(song.id || ''))}
         onRemoveSong={handleRemoveSong}
         onClearSelection={handleClearSelection}
         onDownload={handleStartDownload}
         onDownloadOnly={handleStartDownloadOnly}
-        onClose={() => setShowReviewSelectionModal(false)}
+        onCloseReview={() => setShowReviewSelectionModal(false)}
         useRomanizedMetadata={settings.useRomanizedMetadata}
-      />
-
-      <DownloadingModal
-        visible={showDownloadingModal}
         downloadJobs={downloadJobs}
         hasErrors={hasErrors}
         showCloseOnComplete={showCloseOnComplete}
-        onDismiss={dismissDownloading}
-      />
-
-      <ImportingModal
-        visible={showImportingModal}
-        songCount={importingSongCount}
+        onDismissDownloading={dismissDownloading}
+        importingSongCount={importingSongCount}
       />
 
       <StatusBar style='light' />
