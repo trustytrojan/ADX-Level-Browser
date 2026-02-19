@@ -27,7 +27,7 @@ export const DownloadingContainer = ({
     <View style={styles.downloadingModalOverlay}>
       <View style={styles.downloadingModalContent}>
         <Text style={styles.downloadingModalTitle}>
-          Downloading Levels
+          {isComplete ? 'Downloads Complete' : 'Downloading Levels'}
         </Text>
 
         {hasJobs && (
