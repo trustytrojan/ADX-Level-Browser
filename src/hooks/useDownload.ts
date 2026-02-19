@@ -1,14 +1,22 @@
 import { useCallback, useRef, useSyncExternalStore } from 'react';
-import { Directory, File } from 'expo-file-system';
+import { Directory, File, Paths } from 'expo-file-system';
+import { Platform } from 'react-native';
 import type { DownloadJobItem, SongItem } from '../types';
 import { getFileForSong, getFolderForSong } from '../utils/fileSystem';
-import { downloadSong } from '../services/download';
+import { downloadSong, unzipAdxFile, zipSongFolder } from '../services/download';
+import { openWithAstroDX } from '../utils/sharing';
 
 type CompletedItem = {
   file: File | null;
   folder: Directory | null;
   title: string;
   item: SongItem;
+};
+
+type StartDownloadsResult = {
+  hasPendingDownloads: boolean;
+  completedCount: number;
+  totalCount: number;
 };
 
 // Create a simple store for download jobs
@@ -90,9 +98,9 @@ export const useDownload = (downloadVideos: boolean = true) => {
     });
   };
 
-  const startDownloads = async (items: SongItem[]) => {
+  const startDownloads = (items: SongItem[]): StartDownloadsResult => {
     if (items.length === 0)
-      return;
+      return { hasPendingDownloads: false, completedCount: 0, totalCount: 0 };
 
     // Reset state
     setHasErrors(false);
@@ -125,10 +133,17 @@ export const useDownload = (downloadVideos: boolean = true) => {
 
     // Start downloads for uncached songs in parallel
     uncachedSongs.forEach(downloadSingleSong);
+
+    return {
+      hasPendingDownloads: uncachedSongs.length > 0,
+      completedCount: cachedSongs.length,
+      totalCount: items.length,
+    };
   };
 
   const getCompletedItems = (): CompletedItem[] => {
-    return downloadJobs
+    const jobs = downloadJobsStore.getState();
+    return jobs
       .filter((job) => job.status === 'COMPLETED')
       .map((job) => {
         const item = { id: job.id, sourceId: job.sourceId } as SongItem;
@@ -148,6 +163,79 @@ export const useDownload = (downloadVideos: boolean = true) => {
     setHasErrors(false);
   };
 
+  const getCompletedCount = (): number => {
+    return getCompletedItems().length;
+  };
+
+  const importCompletedDownloads = async (): Promise<number> => {
+    const completedItems = getCompletedItems();
+
+    if (completedItems.length === 0)
+      return 0;
+
+    if (completedItems.length === 1) {
+      const item = completedItems[0];
+      const adxFile = getFileForSong(item.item);
+      const folder = getFolderForSong(item.item);
+
+      if (!adxFile.exists && folder.exists)
+        await zipSongFolder(folder, adxFile);
+
+      await openWithAstroDX(adxFile, item.title);
+      return 1;
+    }
+
+    for (const item of completedItems) {
+      const adxFile = getFileForSong(item.item);
+      const folder = getFolderForSong(item.item);
+
+      if (adxFile.exists && !folder.exists)
+        await unzipAdxFile(adxFile, folder);
+    }
+
+    const folders = completedItems.map((item) => getFolderForSong(item.item));
+    const combinedAdxPath = `${Paths.document.uri}combined-songs.adx`;
+    const combinedAdxFile = new File(combinedAdxPath);
+
+    if (combinedAdxFile.exists)
+      combinedAdxFile.delete();
+
+    if (Platform.OS === 'android') {
+      const { zip } = await import('react-native-zip-archive');
+      const folderPaths = folders.map((folder) => folder.uri);
+      await zip(folderPaths, combinedAdxPath);
+    } else if (Platform.OS === 'ios') {
+      const fflate = await import('fflate');
+      const allSongFiles: Record<string, Uint8Array> = {};
+      const legacyFileSystem = await import('expo-file-system/legacy');
+
+      for (const folder of folders) {
+        const contents = await legacyFileSystem.readDirectoryAsync(folder.uri);
+
+        for (const itemName of contents) {
+          const itemPath = `${folder.uri}/${itemName}`;
+          const itemInfo = await legacyFileSystem.getInfoAsync(itemPath);
+
+          if (itemInfo.exists && itemInfo.isDirectory) {
+            const songFiles = await legacyFileSystem.readDirectoryAsync(itemPath);
+            for (const fileName of songFiles) {
+              const filePath = `${itemPath}/${fileName}`;
+              const file = new File(filePath);
+              if (file.exists)
+                allSongFiles[`${itemName}/${fileName}`] = file.bytesSync();
+            }
+          }
+        }
+      }
+
+      const zipped = fflate.zipSync(allSongFiles);
+      combinedAdxFile.write(zipped);
+    }
+
+    await openWithAstroDX(combinedAdxFile, 'Combined Songs');
+    return completedItems.length;
+  };
+
   const isDownloading = downloadJobs.length > 0
     && downloadJobs.some((job) => job.status !== 'COMPLETED');
 
@@ -157,6 +245,8 @@ export const useDownload = (downloadVideos: boolean = true) => {
     isDownloading,
     startDownloads,
     getCompletedItems,
+    getCompletedCount,
+    importCompletedDownloads,
     clearDownloads,
   };
 };

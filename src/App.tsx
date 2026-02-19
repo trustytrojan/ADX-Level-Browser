@@ -1,5 +1,5 @@
 import { StatusBar } from 'expo-status-bar';
-import { ActivityIndicator, AppState, Linking, Platform, Pressable, Text, TouchableOpacity, View } from 'react-native';
+import { ActivityIndicator, AppState, Linking, Pressable, Text, TouchableOpacity, View } from 'react-native';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import type { AppSettings, SongItem } from './types';
 import { SearchBar } from './components/SearchBar';
@@ -10,11 +10,8 @@ import { AddSourceModal } from './components/modals/AddSourceModal';
 import { DownloadingModal } from './components/modals/DownloadingModal';
 import { ImportingModal } from './components/modals/ImportingModal';
 import { ReviewSelectionModal } from './components/modals/ReviewSelectionModal';
-import { useDownload } from './hooks/useDownload';
-import { openMultipleWithAstroDX, openWithAstroDX, resetIntentLock } from './utils/sharing';
-import { unzipAdxFile, zipSongFolder } from './services/download';
-import { getFileForSong, getFolderForSong } from './utils/fileSystem';
-import { Directory, File, Paths } from 'expo-file-system';
+import { useDownloadFlow } from './hooks/useDownloadFlow';
+import { resetIntentLock } from './utils/sharing';
 import { styles } from './styles/AppStyles';
 import { loadNextPage, resetPaginationState, type SourcePaginationState } from './services/sources';
 import { loadSettings, saveSettings } from './services/settings';
@@ -26,6 +23,7 @@ export default function App() {
   const [showAddSourceModal, setShowAddSourceModal] = useState(false);
   const [shouldReturnToSettings, setShouldReturnToSettings] = useState(false);
   const [sourcesVersion, setSourcesVersion] = useState(0);
+  const [cacheVersion, setCacheVersion] = useState(0);
   const [settings, setSettings] = useState<AppSettings>({
     downloadVideos: true,
     useRomanizedMetadata: false,
@@ -39,9 +37,6 @@ export default function App() {
   const [paginationState, setPaginationState] = useState<SourcePaginationState>({});
   const [toDownload, setToDownload] = useState<Set<string>>(new Set());
   const [showReviewSelectionModal, setShowReviewSelectionModal] = useState(false);
-  const [showDownloadingModal, setShowDownloadingModal] = useState(false);
-  const [showImportingModal, setShowImportingModal] = useState(false);
-  const [importingSongCount, setImportingSongCount] = useState(0);
   const searchTimeout = useRef<NodeJS.Timeout | null>(null);
 
   // Load settings on mount
@@ -143,10 +138,12 @@ export default function App() {
   const {
     downloadJobs,
     hasErrors,
-    startDownloads,
-    getCompletedItems,
-    clearDownloads,
-  } = useDownload(settings.downloadVideos);
+    showDownloadingModal,
+    showImportingModal,
+    importingSongCount,
+    startDownloadFlow,
+    dismissDownloading,
+  } = useDownloadFlow(settings.downloadVideos);
 
   // App state tracking
   useEffect(() => {
@@ -161,18 +158,6 @@ export default function App() {
       subscription.remove();
     };
   }, []);
-
-  // Watch for download completion
-  useEffect(() => {
-    const allComplete = downloadJobs.length > 0 && downloadJobs.every((job) => job.status === 'COMPLETED');
-    if (allComplete && showDownloadingModal && !hasErrors)
-      handleDownloadComplete();
-  }, [downloadJobs, showDownloadingModal, hasErrors]);
-
-  const handleDismissDownloading = () => {
-    setShowDownloadingModal(false);
-    clearDownloads();
-  };
 
   const handleItemPress = useCallback((item: SongItem) => {
     const songId = item.id || '';
@@ -204,116 +189,13 @@ export default function App() {
   };
 
   const handleStartDownload = () => {
-    setShowReviewSelectionModal(false);
     const songsToDownload = songs.filter((song) => toDownload.has(song.id || ''));
     if (songsToDownload.length === 0)
       return;
 
-    setShowDownloadingModal(true);
-    startDownloads(songsToDownload);
-  };
-
-  const handleDownloadComplete = async () => {
+    setShowReviewSelectionModal(false);
     setToDownload(new Set());
-
-    const completedItems = getCompletedItems();
-
-    if (completedItems.length === 0) {
-      setShowDownloadingModal(false);
-      clearDownloads();
-      return;
-    }
-
-    // Hide downloading modal, show importing modal
-    setShowDownloadingModal(false);
-    setShowImportingModal(true);
-    setImportingSongCount(completedItems.length);
-
-    try {
-      if (completedItems.length === 1) {
-        // Single song flow
-        const item = completedItems[0];
-        const adxFile = getFileForSong(item.item);
-        const folder = getFolderForSong(item.item);
-
-        if (!adxFile.exists && folder.exists) {
-          // Only folder exists: zip it
-          await zipSongFolder(folder, adxFile);
-        }
-
-        // Now the .adx file should exist, import it
-        setShowImportingModal(false);
-        await openWithAstroDX(adxFile, item.title);
-        clearDownloads();
-      } else if (completedItems.length > 1) {
-        // Multiple songs flow
-
-        // Ensure all songs have their folders ready
-        for (const item of completedItems) {
-          const adxFile = getFileForSong(item.item);
-          const folder = getFolderForSong(item.item);
-
-          if (adxFile.exists && !folder.exists) {
-            // Only .adx exists: unzip it
-            await unzipAdxFile(adxFile, folder);
-          }
-          // If only folder exists or both exist, we're good
-        }
-
-        // Now all songs should have folders, combine them
-        const folders = completedItems.map((item) => getFolderForSong(item.item));
-
-        // Combine all folders into combined-songs.adx
-        const combinedAdxPath = `${Paths.document.uri}combined-songs.adx`;
-        const combinedAdxFile = new File(combinedAdxPath);
-
-        if (combinedAdxFile.exists)
-          combinedAdxFile.delete();
-
-        if (Platform.OS === 'android') {
-          const { zip } = await import('react-native-zip-archive');
-          const folderPaths = folders.map((f) => f.uri);
-          await zip(folderPaths, combinedAdxPath);
-        } else if (Platform.OS === 'ios') {
-          const fflate = await import('fflate');
-          const allSongFiles: Record<string, Uint8Array> = {};
-
-          // Read files from each folder
-          const legacyFileSystem = await import('expo-file-system/legacy');
-          for (const folder of folders) {
-            const contents = await legacyFileSystem.readDirectoryAsync(folder.uri);
-
-            // Read all subdirectories (song folders)
-            for (const itemName of contents) {
-              const itemPath = `${folder.uri}/${itemName}`;
-              const itemInfo = await legacyFileSystem.getInfoAsync(itemPath);
-
-              if (itemInfo.exists && itemInfo.isDirectory) {
-                // This is a song subdirectory, read its files
-                const songFiles = await legacyFileSystem.readDirectoryAsync(itemPath);
-                for (const fileName of songFiles) {
-                  const filePath = `${itemPath}/${fileName}`;
-                  const file = new File(filePath);
-                  if (file.exists)
-                    allSongFiles[`${itemName}/${fileName}`] = file.bytesSync();
-                }
-              }
-            }
-          }
-
-          const zipped = fflate.zipSync(allSongFiles);
-          combinedAdxFile.write(zipped);
-        }
-
-        setShowImportingModal(false);
-        await openWithAstroDX(combinedAdxFile, 'Combined Songs');
-        clearDownloads();
-      }
-    } catch (error) {
-      console.error('Error processing downloads:', error);
-      setShowImportingModal(false);
-      clearDownloads();
-    }
+    startDownloadFlow(songsToDownload);
   };
 
   const handleRefresh = async () => {
@@ -330,6 +212,10 @@ export default function App() {
   const handleSettingsChange = async (newSettings: AppSettings) => {
     setSettings(newSettings);
     await saveSettings(newSettings);
+  };
+
+  const handleCacheCleared = () => {
+    setCacheVersion((v) => v + 1);
   };
 
   const handleSourceAdded = () => {
@@ -415,6 +301,7 @@ export default function App() {
         useRomanizedMetadata={settings.useRomanizedMetadata}
         refreshing={refreshing}
         onRefresh={handleRefresh}
+        cacheVersion={cacheVersion}
       />
 
       {toDownload.size > 0 && !showDownloadingModal && (
@@ -439,7 +326,7 @@ export default function App() {
         visible={showSettingsModal}
         settings={settings}
         onSettingsChange={handleSettingsChange}
-        onCacheCleared={() => {}}
+        onCacheCleared={handleCacheCleared}
         onClose={() => setShowSettingsModal(false)}
         sourcesVersion={sourcesVersion}
         onRequestAddSource={handleRequestAddSource}
@@ -465,7 +352,7 @@ export default function App() {
         visible={showDownloadingModal}
         downloadJobs={downloadJobs}
         hasErrors={hasErrors}
-        onDismiss={handleDismissDownloading}
+        onDismiss={dismissDownloading}
       />
 
       <ImportingModal

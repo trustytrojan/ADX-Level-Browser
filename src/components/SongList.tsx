@@ -17,6 +17,7 @@ interface SongListProps {
   refreshing: boolean;
   onRefresh: () => void;
   useRomanizedMetadata: boolean;
+  cacheVersion?: number;
 }
 
 export const SongList = ({
@@ -31,8 +32,15 @@ export const SongList = ({
   refreshing,
   onRefresh,
   useRomanizedMetadata,
+  cacheVersion = 0,
 }: SongListProps) => {
   const [downloadedIds, setDownloadedIds] = useState<Set<string>>(new Set());
+
+  // Clear downloaded IDs when cache is cleared
+  useEffect(() => {
+    if (cacheVersion > 0)
+      setDownloadedIds(new Set());
+  }, [cacheVersion]);
 
   const viewableItemsChanged = useRef(({ viewableItems }: { viewableItems: Array<{ item: SongItem }> }) => {
     setDownloadedIds((prev) => {
