@@ -8,6 +8,12 @@ on:
       - '*.md'
       - '*.txt'
       - .github/workflows/build-android.yml
+  pull_request:
+    branches: [master]
+    paths-ignore:
+      - '*.md'
+      - '*.txt'
+      - .github/workflows/build-android.yml
 
 env:
   PROJECT_NAME: ADXLevels
