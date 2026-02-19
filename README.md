@@ -1,33 +1,24 @@
 # ADX Level Browser
-A React Native/Expo app providing an all-in-one interface for searching, downloading, and importing levels to AstroDX.
-
-## Architecture
-
-The app now uses a **source-based architecture** that supports multiple level sources with a majdata.net-like API interface. Songs are loaded from configurable sources stored in `sources.json` in the app's private data directory.
+An [Expo](https://expo.dev) app providing an all-in-one interface for searching, downloading, and importing levels to AstroDX.
 
 ## Features
-
-- **Multiple Sources**: Add and manage multiple level sources
-- **Optional Video Downloads**: To save bandwidth and storage
-- **Romanized Metadata**: Display romanized titles/artists when available
-- **Batch Selection by Default**: Import multiple songs at once
-- **Download Cache**: Avoid re-downloading songs that are in the app's cache
-- **Direct Import**: Downloads open directly in AstroDX
-
-## Creating your own Source
-
-See [SOURCES.md](./SOURCES.md) for details.
+- Downloaded levels **open directly in AstroDX** on your mobile device, **no file management hassle!**
+- You can find levels from **multiple level sources** by adding them to the app
+- Video downloads are **optional** to save bandwidth and storage space
+- If sources provide it, displays **romanized level metadata** so you can find Japanese-titled songs or artists quickly
+- You can download and import **multiple songs at once!**
+- Levels that have been already downloaded are cached in the app's storage and can be quickly imported to AstroDX **without redownloading again** (you can clear the download cache if desired)
 
 ## Installing/Running the app
 
 ### Android
-APKs are built on every commit with GitHub Actions. You can download the latest build [here](https://nightly.link/trustytrojan/adx-convert-browser/workflows/build-android/master/android-build.zip).
+APKs are built on every commit with GitHub Actions. You can download the latest build artifact [here](https://nightly.link/trustytrojan/adx-convert-browser/workflows/build-android/master/android-build.zip); the APK file is inside the ZIP file.
 
 ### iOS/iPadOS
-Since I don't own a new enough Mac, and I don't want to give Apple my personal info, I'm going to be hosting a tunneled Expo development server. This means you can simply install [Expo Go from the App Store](https://apps.apple.com/us/app/expo-go/id982107779), scan the QR code below (whenever it is there) with the Camera app, and the app should download and run within Expo Go.
+**Unsigned** IPAs are build on every commit with GitHub Actions. You can download the latest build artifact [here](https://nightly.link/trustytrojan/adx-convert-browser/workflows/build-ios/master/adx-level-browser-ios.zip); the IPA file is inside the ZIP file. **You must sideload the IPA.** I personally recommend using [SideStore](https://sidestore.io/); you can read installation instructions on its website.
 
 ### Expo Go
-If for some reason you cannot install the APK/IPA files from above, your last option is to run the app within **Expo Go** ([Play Store](https://play.google.com/store/apps/details?id=host.exp.exponent), [App Store](https://apps.apple.com/us/app/expo-go/id982107779)). Once you have Expo Go installed, simply scan the QR code below with your device's Camera app.
+If for some reason you cannot install the APK/IPA files from above, your last option is to run the app within **Expo Go** ([Play Store](https://play.google.com/store/apps/details?id=host.exp.exponent), [App Store](https://apps.apple.com/us/app/expo-go/id982107779)). I will be hosting a tunneled Expo development server to make this possible. Once you have Expo Go installed, simply scan the QR code below (may not always work, [report](#submitting-bug-reports-and-feature-requests) if broken) with your device's camera app.
 ```
 ▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄
 █ ▄▄▄▄▄ █▄▄▄ ▀ ▄██ ▀▀██ ▄▄▄▄▄ █
@@ -47,7 +38,13 @@ If for some reason you cannot install the APK/IPA files from above, your last op
 █▄▄▄▄▄▄▄█▄▄▄███▄▄███▄▄▄▄█▄▄████
 ```
 
-**There is one caveat to running in Expo Go,** however: since Expo Go can't relink native libraries, the unzipping/zipping process of ADX files has to happen synchronously in pure JavaScript code, which **will be slow.**
+**There is one caveat to running in Expo Go,** however: since Expo Go can't dynamically link to native libraries, the unzipping/zipping process of ADX files has to happen synchronously in pure JavaScript code, which **will be slow.** Everything else should function as intended.
+
+## Submitting bug reports and feature requests
+[Submit an issue](https://github.com/trustytrojan/ADX-Level-Browser/issues) in this repository, or ping @trustytrojan in the [official AstroDX Discord server](https://discord.gg/6fpETgpvjZ).
+
+## Creating your own source
+See [SOURCES.md](./SOURCES.md) for details.
 
 ## Building
 Before moving to the platform-specific instructions, make sure you `npm i` and `npx expo prebuild -p <android|ios>`.
