@@ -18,15 +18,9 @@ export const ImportingModal = ({
       visible={visible}
       animationType='none'
       transparent={true}
-      // onRequestClose={() => {
-      //   // User cannot close this modal while importing
-      // }}
     >
       <View style={styles.downloadingModalOverlay}>
-        <View
-          style={styles.downloadingModalContent}
-          onStartShouldSetResponder={() => true}
-        >
+        <View style={styles.downloadingModalContent}>
           <Text style={styles.downloadingModalTitle}>
             Importing Levels
           </Text>

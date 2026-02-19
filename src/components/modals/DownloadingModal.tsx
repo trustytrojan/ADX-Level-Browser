@@ -3,6 +3,7 @@ import { MaterialCommunityIcons } from '@expo/vector-icons';
 import type { DownloadJobItem } from '../../types';
 import { styles } from '../../styles/AppStyles';
 import MyModal from './MyModal';
+import { ModalSongElement } from './ModalSongElement';
 
 interface DownloadingModalProps {
   visible: boolean;
@@ -35,10 +36,7 @@ export const DownloadingModal = ({
       }}
     >
       <View style={styles.downloadingModalOverlay}>
-        <View
-          style={styles.downloadingModalContent}
-          onStartShouldSetResponder={() => true}
-        >
+        <View style={styles.downloadingModalContent}>
           <Text style={styles.downloadingModalTitle}>
             Downloading Levels
           </Text>
@@ -73,26 +71,21 @@ export const DownloadingModal = ({
             {downloadJobs.map((job) => {
               const isCompleted = job.status === 'COMPLETED';
               const isInProgress = job.status === 'IN_PROGRESS';
+
+              const leftIcon = isCompleted
+                ? <MaterialCommunityIcons name='check-circle' size={20} color='#4caf50' />
+                : isInProgress
+                ? <ActivityIndicator size='small' color='#007AFF' />
+                : <MaterialCommunityIcons name='clock-outline' size={20} color='#9aa3b2' />;
+
               return (
-                <View key={job.id} style={styles.downloadingModalItem}>
-                  <View style={styles.downloadingModalItemLeft}>
-                    {isCompleted
-                      ? <MaterialCommunityIcons name='check-circle' size={20} color='#4caf50' />
-                      : isInProgress
-                      ? <ActivityIndicator size='small' color='#007AFF' />
-                      : <MaterialCommunityIcons name='clock-outline' size={20} color='#9aa3b2' />}
-                  </View>
-                  <View style={styles.downloadingModalItemContent}>
-                    <Text style={styles.downloadingModalItemTitle} numberOfLines={1}>
-                      {job.title}
-                    </Text>
-                    {job.artist && (
-                      <Text style={styles.downloadingModalItemSubtitle} numberOfLines={1}>
-                        {job.artist}
-                      </Text>
-                    )}
-                  </View>
-                </View>
+                <ModalSongElement
+                  key={job.id}
+                  title={job.title}
+                  subtitle={job.artist}
+                  leftIcon={leftIcon}
+                  variant='downloading'
+                />
               );
             })}
           </ScrollView>

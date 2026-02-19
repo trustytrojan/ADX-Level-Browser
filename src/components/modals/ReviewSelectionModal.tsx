@@ -1,8 +1,11 @@
+import { useEffect, useState } from 'react';
 import { ScrollView, Text, TouchableOpacity, View } from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import type { SongItem } from '../../types';
 import { styles } from '../../styles/AppStyles';
+import { getFileForSong, getFolderForSong } from '../../utils/fileSystem';
 import MyModal from './MyModal';
+import { ModalSongElement } from './ModalSongElement';
 
 interface ReviewSelectionModalProps {
   visible: boolean;
@@ -23,6 +26,34 @@ export const ReviewSelectionModal = ({
   onClose,
   useRomanizedMetadata = false,
 }: ReviewSelectionModalProps) => {
+  const [downloadedIds, setDownloadedIds] = useState<Set<string>>(new Set());
+
+  useEffect(() => {
+    if (visible && selectedSongs.length === 0)
+      onClose();
+  }, [selectedSongs.length, visible, onClose]);
+
+  // Check downloaded status for all selected songs
+  useEffect(() => {
+    if (visible) {
+      const checkDownloaded = () => {
+        const downloaded = new Set<string>();
+        selectedSongs.forEach((song) => {
+          const file = getFileForSong(song);
+          const folder = getFolderForSong(song);
+          if (file.exists || folder.exists)
+            downloaded.add(song.id || '');
+        });
+        setDownloadedIds(downloaded);
+      };
+      checkDownloaded();
+    }
+  }, [visible, selectedSongs]);
+
+  // Check if all selected songs are already downloaded
+  const allDownloaded = selectedSongs.length > 0
+    && selectedSongs.every((song) => downloadedIds.has(song.id || ''));
+
   return (
     <MyModal
       visible={visible}
@@ -31,10 +62,7 @@ export const ReviewSelectionModal = ({
       onRequestClose={onClose}
     >
       <View style={styles.reviewModalOverlay}>
-        <View
-          style={styles.reviewModalContent}
-          onStartShouldSetResponder={() => true}
-        >
+        <View style={styles.reviewModalContent}>
           <View style={styles.reviewModalHeader}>
             <Text style={styles.reviewModalTitle}>Review Selection</Text>
             <TouchableOpacity onPress={onClose} hitSlop={12}>
@@ -50,25 +78,19 @@ export const ReviewSelectionModal = ({
             {selectedSongs.map((song) => {
               const displayTitle = useRomanizedMetadata && song.romanizedTitle ? song.romanizedTitle : song.title;
               const displayArtist = useRomanizedMetadata && song.romanizedArtist ? song.romanizedArtist : song.artist;
+              const songId = song.id || '';
+              const isDownloaded = downloadedIds.has(songId);
 
               return (
-                <View key={`${song.sourceId}:${song.id}`} style={styles.reviewModalItem}>
-                  <View style={styles.reviewModalItemContent}>
-                    <Text style={styles.reviewModalItemTitle} numberOfLines={1}>
-                      {displayTitle}
-                    </Text>
-                    <Text style={styles.reviewModalItemSubtitle} numberOfLines={1}>
-                      {displayArtist}
-                    </Text>
-                  </View>
-                  <TouchableOpacity
-                    onPress={() => onRemoveSong(song.id || '')}
-                    hitSlop={12}
-                    style={styles.reviewModalItemRemove}
-                  >
-                    <MaterialCommunityIcons name='close' size={20} color='#ff6b6b' />
-                  </TouchableOpacity>
-                </View>
+                <ModalSongElement
+                  key={`${song.sourceId}:${song.id}`}
+                  title={displayTitle}
+                  subtitle={displayArtist}
+                  downloaded={isDownloaded}
+                  showRemoveButton={true}
+                  onRemove={() => onRemoveSong(songId)}
+                  variant='review'
+                />
               );
             })}
           </ScrollView>
@@ -84,8 +106,14 @@ export const ReviewSelectionModal = ({
               style={styles.reviewModalDownloadButton}
               onPress={onDownload}
             >
-              <MaterialCommunityIcons name='download' size={20} color='#fff' />
-              <Text style={styles.reviewModalDownloadButtonText}>Download</Text>
+              <MaterialCommunityIcons
+                name={allDownloaded ? 'import' : 'download'}
+                size={20}
+                color='#fff'
+              />
+              <Text style={styles.reviewModalDownloadButtonText}>
+                {allDownloaded ? 'Import' : 'Download & Import'}
+              </Text>
             </TouchableOpacity>
           </View>
         </View>
