@@ -114,6 +114,14 @@ export interface SourcePaginationState {
   };
 }
 
+export interface SourceLoadProgress {
+  sourceId: string;
+  songs: Song[];
+  paginationState: SourcePaginationState;
+  remainingSources: number;
+  totalSources: number;
+}
+
 /**
  * Fetch the list of songs from a source
  * @param source - The source to fetch from
@@ -188,6 +196,7 @@ export function getVideoUrl(source: Source, songId: string): string {
 export async function loadNextPage(
   paginationState: SourcePaginationState,
   searchQuery: string = '',
+  onSourceLoaded?: (progress: SourceLoadProgress) => void,
 ): Promise<{ songs: Song[]; paginationState: SourcePaginationState }> {
   const sources = await loadSources();
   const enabledSources = sources.filter((s) => s.enabled);
@@ -197,22 +206,31 @@ export async function loadNextPage(
 
   const newSongs: Song[] = [];
   const updatedPagination = { ...paginationState };
+  const sourcesToFetch: Source[] = [];
+
+  enabledSources.forEach((source) => {
+    if (!updatedPagination[source.id])
+      updatedPagination[source.id] = { currentPage: 0, hasMore: true };
+
+    if (updatedPagination[source.id].hasMore)
+      sourcesToFetch.push(source);
+  });
+
+  if (sourcesToFetch.length === 0)
+    return { songs: [], paginationState: updatedPagination };
+
+  let remainingSources = sourcesToFetch.length;
+  const totalSources = sourcesToFetch.length;
 
   // Fetch next page from each source that has more pages
   await Promise.allSettled(
-    enabledSources.map(async (source) => {
-      // Initialize pagination state for this source if not exists
-      if (!updatedPagination[source.id])
-        updatedPagination[source.id] = { currentPage: 0, hasMore: true };
-
+    sourcesToFetch.map(async (source) => {
       const sourceState = updatedPagination[source.id];
-
-      // Skip if no more pages
-      if (!sourceState.hasMore)
-        return;
+      let sourceSongs: Song[] = [];
 
       try {
         const songs = await fetchSongList(source, sourceState.currentPage, searchQuery);
+        sourceSongs = songs;
 
         if (songs.length > 0) {
           newSongs.push(...songs);
@@ -237,6 +255,15 @@ export async function loadNextPage(
           ...sourceState,
           hasMore: false,
         };
+      } finally {
+        remainingSources -= 1;
+        onSourceLoaded?.({
+          sourceId: source.id,
+          songs: sourceSongs,
+          paginationState: { ...updatedPagination },
+          remainingSources,
+          totalSources,
+        });
       }
     }),
   );
@@ -249,6 +276,11 @@ export async function loadNextPage(
  */
 export function resetPaginationState(): SourcePaginationState {
   return {};
+}
+
+export async function getEnabledSourceCount(): Promise<number> {
+  const sources = await loadSources();
+  return sources.filter((s) => s.enabled).length;
 }
 
 /**

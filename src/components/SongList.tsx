@@ -35,6 +35,8 @@ export const SongList = ({
   downloadedStateVersion = 0,
 }: SongListProps) => {
   const [downloadedIds, setDownloadedIds] = useState<Set<string>>(new Set());
+  const listRef = useRef<FlatList<SongItem>>(null);
+  const wasRefreshingRef = useRef(false);
 
   // Re-check downloaded status when cache/download state changes
   useEffect(() => {
@@ -70,6 +72,19 @@ export const SongList = ({
 
   const viewabilityConfig = useRef({ itemVisiblePercentThreshold: 60 }).current;
 
+  useEffect(() => {
+    if (refreshing) {
+      wasRefreshingRef.current = true;
+      listRef.current?.scrollToOffset({ offset: 0, animated: false });
+      return;
+    }
+
+    if (wasRefreshingRef.current) {
+      listRef.current?.scrollToOffset({ offset: 0, animated: false });
+      wasRefreshingRef.current = false;
+    }
+  }, [refreshing, songs.length]);
+
   const handleEndReached = () => {
     // Only load more if there are actually more pages available
     if (!loading && !loadingMore && hasMore && songs.length > 0)
@@ -94,18 +109,19 @@ export const SongList = ({
           item={item}
           downloaded={downloadedIds.has(songId)}
           isSelected={isInQueue(songId)}
-          onPress={onSongPress}
+          onPress={refreshing ? () => {} : onSongPress}
           useRomanizedMetadata={useRomanizedMetadata}
         />
       );
     },
-    [downloadedIds, isInQueue, onSongPress, useRomanizedMetadata],
+    [downloadedIds, isInQueue, onSongPress, refreshing, useRomanizedMetadata],
   );
 
   return (
     <>
       {/* <Text style={styles.sectionLabel}>Song List</Text> */}
       <FlatList
+        ref={listRef}
         style={styles.songsList}
         data={songs}
         keyExtractor={(item) => `${item.sourceId}:${item.id}`}
@@ -116,9 +132,11 @@ export const SongList = ({
         viewabilityConfig={viewabilityConfig}
         onEndReached={handleEndReached}
         onEndReachedThreshold={0.3}
-        maintainVisibleContentPosition={{
-          minIndexForVisible: 0,
+        onContentSizeChange={() => {
+          if (refreshing || wasRefreshingRef.current)
+            listRef.current?.scrollToOffset({ offset: 0, animated: false });
         }}
+        scrollEnabled={!refreshing}
         removeClippedSubviews={false}
         refreshControl={
           <RefreshControl

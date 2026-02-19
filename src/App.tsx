@@ -10,7 +10,12 @@ import { ImportFlowModal } from './components/modals/ImportFlowModal';
 import { useDownloadFlow } from './hooks/useDownloadFlow';
 import { resetIntentLock } from './utils/sharing';
 import { styles } from './styles/AppStyles';
-import { loadNextPage, resetPaginationState, type SourcePaginationState } from './services/sources';
+import {
+  getEnabledSourceCount,
+  loadNextPage,
+  resetPaginationState,
+  type SourcePaginationState,
+} from './services/sources';
 import { loadSettings, saveSettings } from './services/settings';
 import { Entypo, Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 
@@ -24,6 +29,7 @@ export default function App() {
   });
   const [songs, setSongs] = useState<SongItem[]>([]);
   const [loading, setLoading] = useState(true);
+  const [remainingSources, setRemainingSources] = useState(0);
   const [loadingMore, setLoadingMore] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [refreshing, setRefreshing] = useState(false);
@@ -46,11 +52,34 @@ export default function App() {
   const loadInitialSongs = async (search: string = '') => {
     setLoading(true);
     setError(null);
+    setSongs([]);
 
     try {
       const initialPagination = resetPaginationState();
-      const result = await loadNextPage(initialPagination, search);
-      setSongs(result.songs);
+      setPaginationState(initialPagination);
+
+      const enabledSourceCount = await getEnabledSourceCount();
+      setRemainingSources(enabledSourceCount);
+
+      const result = await loadNextPage(initialPagination, search, ({ songs: sourceSongs, paginationState, remainingSources }) => {
+        setRemainingSources(remainingSources);
+        setPaginationState(paginationState);
+
+        if (sourceSongs.length > 0) {
+          setSongs((prev) => {
+            const existingKeys = new Set(prev.map((song) => `${song.sourceId}:${song.id}`));
+            const newUniqueSongs = sourceSongs.filter(
+              (song) => !existingKeys.has(`${song.sourceId}:${song.id}`),
+            );
+
+            if (newUniqueSongs.length === 0)
+              return prev;
+
+            return [...prev, ...newUniqueSongs];
+          });
+        }
+      });
+
       setPaginationState(result.paginationState);
     } catch (err) {
       console.error('Failed to load songs:', err);
@@ -267,7 +296,7 @@ export default function App() {
       {loading && (
         <View style={styles.loadingContainer}>
           <ActivityIndicator size='large' color='#007AFF' />
-          <Text style={styles.loadingText}>Loading songs from sources...</Text>
+          <Text style={styles.loadingText}>Loading songs from {remainingSources} source{remainingSources > 1 ? 's' : ''}...</Text>
         </View>
       )}
 
