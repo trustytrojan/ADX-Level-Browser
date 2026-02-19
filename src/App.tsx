@@ -7,11 +7,14 @@ import { SongList } from './components/SongList';
 import { HelpModal } from './components/HelpModal';
 import { SettingsModal } from './components/SettingsModal';
 import { AddSourceModal } from './components/AddSourceModal';
-import { DownloadingModal } from './components/DownloadingModal';
+import { DownloadingModal } from './components/DownloadingModalNew';
+import { ImportingModal } from './components/ImportingModal';
 import { ReviewSelectionModal } from './components/ReviewSelectionModal';
 import { useDownload } from './hooks/useDownload';
-import { resetIntentLock } from './utils/sharing';
-import { openWithAstroDX, openMultipleWithAstroDX } from './utils/sharing';
+import { resetIntentLock, openWithAstroDX, openMultipleWithAstroDX } from './utils/sharing';
+import { zipSongFolder, unzipAdxFile } from './services/download';
+import { getFileForSong, getFolderForSong } from './utils/fileSystem';
+import { File, Directory, Paths } from 'expo-file-system';
 import { styles } from './styles/AppStyles';
 import { loadNextPage, resetPaginationState, type SourcePaginationState } from './services/sources';
 import { loadSettings, saveSettings } from './services/settings';
@@ -37,7 +40,8 @@ export default function App() {
   const [toDownload, setToDownload] = useState<Set<string>>(new Set());
   const [showReviewSelectionModal, setShowReviewSelectionModal] = useState(false);
   const [showDownloadingModal, setShowDownloadingModal] = useState(false);
-  const [isCompressing, setIsCompressing] = useState(false);
+  const [showImportingModal, setShowImportingModal] = useState(false);
+  const [importingSongCount, setImportingSongCount] = useState(0);
   const searchTimeout = useRef<NodeJS.Timeout | null>(null);
 
   // Load settings on mount
@@ -144,7 +148,7 @@ export default function App() {
     downloadJobs,
     hasErrors,
     startDownloads,
-    getCompletedFiles,
+    getCompletedItems,
     clearDownloads,
   } = useDownload(settings.downloadVideos);
 
@@ -161,6 +165,19 @@ export default function App() {
       subscription.remove();
     };
   }, []);
+
+  // Watch for download completion
+  useEffect(() => {
+    const allComplete = downloadJobs.length > 0 && downloadJobs.every(job => job.status === 'COMPLETED');
+    if (allComplete && showDownloadingModal && !hasErrors) {
+      handleDownloadComplete();
+    }
+  }, [downloadJobs, showDownloadingModal, hasErrors]);
+
+  const handleDismissDownloading = () => {
+    setShowDownloadingModal(false);
+    clearDownloads();
+  };
 
   const handleItemPress = useCallback((item: SongItem) => {
     const songId = item.id || '';
@@ -201,40 +218,108 @@ export default function App() {
     startDownloads(songsToDownload);
   };
 
-  const handleDownloadComplete = () => {
+  const handleDownloadComplete = async () => {
     setToDownload(new Set());
 
-    const completedFiles = getCompletedFiles();
+    const completedItems = getCompletedItems();
     
-    if (completedFiles.length === 0) {
+    if (completedItems.length === 0) {
       setShowDownloadingModal(false);
       clearDownloads();
       return;
     }
 
-    const files = completedFiles.map(f => f.file);
-    const titles = completedFiles.map(f => f.title);
+    // Hide downloading modal, show importing modal
+    setShowDownloadingModal(false);
+    setShowImportingModal(true);
+    setImportingSongCount(completedItems.length);
 
-    if (files.length === 1) {
-      setShowDownloadingModal(false);
-      openWithAstroDX(files[0], titles[0])
-        .catch(console.error)
-        .finally(() => clearDownloads());
-    } else if (files.length > 1) {
-      setIsCompressing(true);
-      openMultipleWithAstroDX(
-        files,
-        () => {}, // onCompressionStart - no-op, we're already showing UI
-        () => {} // onCompressionEnd - no-op, we'll handle it here
-      )
-        .catch((error) => {
-          console.error('Error sending files to AstroDX:', error);
-        })
-        .finally(() => {
-          setIsCompressing(false);
-          setShowDownloadingModal(false);
-          clearDownloads();
-        });
+    try {
+      if (completedItems.length === 1) {
+        // Single song flow
+        const item = completedItems[0];
+        const adxFile = getFileForSong(item.item);
+        const folder = getFolderForSong(item.item);
+        
+        if (!adxFile.exists && folder.exists) {
+          // Only folder exists: zip it
+          await zipSongFolder(folder, adxFile);
+        }
+        
+        // Now the .adx file should exist, import it
+        setShowImportingModal(false);
+        await openWithAstroDX(adxFile, item.title);
+        clearDownloads();
+      } else if (completedItems.length > 1) {
+        // Multiple songs flow
+        
+        // Ensure all songs have their folders ready
+        for (const item of completedItems) {
+          const adxFile = getFileForSong(item.item);
+          const folder = getFolderForSong(item.item);
+          
+          if (adxFile.exists && !folder.exists) {
+            // Only .adx exists: unzip it
+            await unzipAdxFile(adxFile, folder);
+          }
+          // If only folder exists or both exist, we're good
+        }
+        
+        // Now all songs should have folders, combine them
+        const folders = completedItems.map(item => getFolderForSong(item.item));
+        
+        // Combine all folders into combined-songs.adx
+        const combinedAdxPath = `${Paths.document.uri}combined-songs.adx`;
+        const combinedAdxFile = new File(combinedAdxPath);
+        
+        if (combinedAdxFile.exists) {
+          combinedAdxFile.delete();
+        }
+        
+        if (Platform.OS === 'android') {
+          const { zip } = await import('react-native-zip-archive');
+          const folderPaths = folders.map(f => f.uri);
+          await zip(folderPaths, combinedAdxPath);
+        } else if (Platform.OS === 'ios') {
+          const fflate = await import('fflate');
+          const allSongFiles: Record<string, Uint8Array> = {};
+          
+          // Read files from each folder
+          const legacyFileSystem = await import('expo-file-system/legacy');
+          for (const folder of folders) {
+            const contents = await legacyFileSystem.readDirectoryAsync(folder.uri);
+            
+            // Read all subdirectories (song folders)
+            for (const itemName of contents) {
+              const itemPath = `${folder.uri}/${itemName}`;
+              const itemInfo = await legacyFileSystem.getInfoAsync(itemPath);
+              
+              if (itemInfo.exists && itemInfo.isDirectory) {
+                // This is a song subdirectory, read its files
+                const songFiles = await legacyFileSystem.readDirectoryAsync(itemPath);
+                for (const fileName of songFiles) {
+                  const filePath = `${itemPath}/${fileName}`;
+                  const file = new File(filePath);
+                  if (file.exists) {
+                    allSongFiles[`${itemName}/${fileName}`] = file.bytesSync();
+                  }
+                }
+              }
+            }
+          }
+          
+          const zipped = fflate.zipSync(allSongFiles);
+          combinedAdxFile.write(zipped);
+        }
+        
+        setShowImportingModal(false);
+        await openWithAstroDX(combinedAdxFile, 'Combined Songs');
+        clearDownloads();
+      }
+    } catch (error) {
+      console.error('Error processing downloads:', error);
+      setShowImportingModal(false);
+      clearDownloads();
     }
   };
 
@@ -387,8 +472,12 @@ export default function App() {
         visible={showDownloadingModal}
         downloadJobs={downloadJobs}
         hasErrors={hasErrors}
-        isCompressing={isCompressing}
-        onComplete={handleDownloadComplete}
+        onDismiss={handleDismissDownloading}
+      />
+
+      <ImportingModal
+        visible={showImportingModal}
+        songCount={importingSongCount}
       />
 
       <StatusBar style='light' />

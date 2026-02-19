@@ -1,8 +1,8 @@
 import { Text, FlatList, RefreshControl, ActivityIndicator, View } from 'react-native';
 import { useRef, useCallback, useState, useEffect } from 'react';
 import type { SongItem } from '../types';
-import { SongListItem } from './SongListItem';
-import { getFileForSong } from '../utils/fileSystem';
+import { SongElement } from './SongElement';
+import { getFileForSong, getFolderForSong } from '../utils/fileSystem';
 import { styles } from '../styles/AppStyles';
 
 interface SongListProps {
@@ -42,7 +42,8 @@ export const SongList = ({
         const songId = item.id || '';
         if (!prev.has(songId)) {
           const file = getFileForSong(item);
-          if (file.exists) {
+          const folder = getFolderForSong(item);
+          if (file.exists || folder.exists) {
             next.add(songId);
             updated = true;
           }
@@ -74,10 +75,10 @@ export const SongList = ({
     ({ item }: { item: SongItem }) => {
       const songId = item.id || '';
       return (
-        <SongListItem
+        <SongElement
           item={item}
           downloaded={downloadedIds.has(songId)}
-          isInQueue={isInQueue(songId)}
+          isSelected={isInQueue(songId)}
           onPress={onSongPress}
           useRomanizedMetadata={useRomanizedMetadata}
         />

@@ -1,12 +1,14 @@
 import { useSyncExternalStore, useRef, useCallback } from 'react';
-import { File } from 'expo-file-system';
+import { File, Directory } from 'expo-file-system';
 import type { SongItem, DownloadJobItem } from '../types';
-import { getFileForSong } from '../utils/fileSystem';
+import { getFileForSong, getFolderForSong } from '../utils/fileSystem';
 import { downloadSong } from '../services/download';
 
-type CompletedFileItem = {
-  file: File;
+type CompletedItem = {
+  file: File | null;
+  folder: Directory | null;
   title: string;
+  item: SongItem;
 };
 
 // Create a simple store for download jobs
@@ -60,8 +62,14 @@ export const useDownload = (downloadVideos: boolean = true) => {
     return item.id || '';
   };
 
-  const downloadSingleSong = (item: SongItem) => {
+  const isSongCached = (item: SongItem): boolean => {
     const file = getFileForSong(item);
+    const folder = getFolderForSong(item);
+    return file.exists || folder.exists;
+  };
+
+  const downloadSingleSong = (item: SongItem) => {
+    const folder = getFolderForSong(item);
     const songId = getSongId(item);
 
     // Update to IN_PROGRESS immediately
@@ -73,7 +81,7 @@ export const useDownload = (downloadVideos: boolean = true) => {
       )
     );
 
-    return downloadSong(item, file, downloadVideos).then(() => {
+    return downloadSong(item, folder, downloadVideos).then(() => {
       // Update to COMPLETED
       setDownloadJobs((prev) =>
         prev.map((entry) =>
@@ -101,8 +109,7 @@ export const useDownload = (downloadVideos: boolean = true) => {
     const uncachedSongs: SongItem[] = [];
 
     items.forEach((item) => {
-      const file = getFileForSong(item);
-      if (file.exists) {
+      if (isSongCached(item)) {
         cachedSongs.push(item);
       } else {
         uncachedSongs.push(item);
@@ -128,12 +135,19 @@ export const useDownload = (downloadVideos: boolean = true) => {
     uncachedSongs.forEach(downloadSingleSong);
   };
 
-  const getCompletedFiles = (): CompletedFileItem[] => {
+  const getCompletedItems = (): CompletedItem[] => {
     return downloadJobs
       .filter((job) => job.status === 'COMPLETED')
       .map((job) => {
-        const file = getFileForSong({ id: job.id, sourceId: job.sourceId } as SongItem);
-        return { file, title: job.title };
+        const item = { id: job.id, sourceId: job.sourceId } as SongItem;
+        const file = getFileForSong(item);
+        const folder = getFolderForSong(item);
+        return { 
+          file: file.exists ? file : null,
+          folder: folder.exists ? folder : null,
+          title: job.title,
+          item
+        };
       });
   };
 
@@ -150,7 +164,7 @@ export const useDownload = (downloadVideos: boolean = true) => {
     hasErrors,
     isDownloading,
     startDownloads,
-    getCompletedFiles,
+    getCompletedItems,
     clearDownloads,
   };
 };

@@ -6,11 +6,11 @@ import { styles } from '../styles/AppStyles';
 
 type ElementItem = SongItem | DownloadJobItem;
 
-interface SongElementProps {
-  item: ElementItem;
+interface SongElementProps<T extends ElementItem = ElementItem> {
+  item: T;
   downloaded?: boolean; // For SongItem
   isSelected?: boolean;
-  onPress?: (item: ElementItem) => void;
+  onPress?: (item: T) => void;
   useRomanizedMetadata?: boolean;
 }
 
@@ -22,13 +22,13 @@ const isDownloadJobItem = (item: ElementItem): item is DownloadJobItem => {
   return 'status' in item && typeof (item as DownloadJobItem).status === 'string';
 };
 
-export const SongElement = memo(({
+export const SongElement = memo(<T extends ElementItem = ElementItem>({
   item,
   downloaded = false,
   isSelected = false,
   onPress,
   useRomanizedMetadata = false,
-}: SongElementProps) => {
+}: SongElementProps<T>) => {
   const isSong = isSongItem(item);
   const isJob = isDownloadJobItem(item);
 
@@ -99,4 +99,4 @@ export const SongElement = memo(({
       </View>
     </TouchableOpacity>
   );
-});
+}) as <T extends ElementItem = ElementItem>(props: SongElementProps<T>) => React.ReactElement;

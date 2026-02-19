@@ -14,6 +14,19 @@ export const getFileForSong = (item: SongItem): File => {
   return new File(downloadsDir, fileName);
 };
 
+export const getFolderForSong = (item: SongItem): Directory => {
+  // Use the song's unique ID
+  const id = item.id;
+  if (!id) {
+    throw new Error('Song must have an id');
+  }
+  // Include sourceId in folder name to ensure uniqueness across sources
+  const folderName = `${item.sourceId}_${id}`;
+  const downloadsDir = new Directory(Paths.document, 'adx-downloads');
+  downloadsDir.create({ intermediates: true, idempotent: true });
+  return new Directory(downloadsDir, folderName);
+};
+
 export const clearDownloadCache = async (): Promise<void> => {
   const downloadsDir = new Directory(Paths.document, 'adx-downloads');
   try {
