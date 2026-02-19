@@ -8,14 +8,15 @@ An [Expo](https://expo.dev) app providing an all-in-one interface for searching,
 - If sources provide it, displays **romanized level metadata** so you can find Japanese-titled songs or artists quickly
 - You can download and import **multiple songs at once!**
 - Levels that have been already downloaded are cached in the app's storage and can be quickly imported to AstroDX **without redownloading again** (you can clear the download cache if desired)
+- **[Majdata.net](https://majdata.net) is added as a default source,** so you can find levels right away!
 
 ## Installing/Running the app
 
 ### Android
-APKs are built on every commit with GitHub Actions. You can download the latest build artifact [here](https://nightly.link/trustytrojan/adx-convert-browser/workflows/build-android/master/android-build.zip); the APK file is inside the ZIP file.
+APKs are built on every commit with GitHub Actions. You can download the latest build artifact [here](https://nightly.link/trustytrojan/ADX-Level-Browser/workflows/build/master/adx-level-browser-android.zip); the APK file is inside the ZIP file.
 
 ### iOS/iPadOS
-**Unsigned** IPAs are build on every commit with GitHub Actions. You can download the latest build artifact [here](https://nightly.link/trustytrojan/adx-convert-browser/workflows/build-ios/master/adx-level-browser-ios.zip); the IPA file is inside the ZIP file. **You must sideload the IPA.** I personally recommend using [SideStore](https://sidestore.io/); you can read installation instructions on its website.
+**Unsigned** IPAs are built on every commit with GitHub Actions. You can download the latest build artifact [here](https://nightly.link/trustytrojan/ADX-Level-Browser/workflows/build/master/adx-level-browser-ios.zip); the IPA file is inside the ZIP file. **You must sideload the IPA.** I personally recommend using [SideStore](https://sidestore.io/); you can read installation instructions on its website.
 
 ### Expo Go
 If for some reason you cannot install the APK/IPA files from above, your last option is to run the app within **Expo Go** ([Play Store](https://play.google.com/store/apps/details?id=host.exp.exponent), [App Store](https://apps.apple.com/us/app/expo-go/id982107779)). I will be hosting a tunneled Expo development server to make this possible. Once you have Expo Go installed, simply scan the QR code below (may not always work, [report](#submitting-bug-reports-and-feature-requests) if broken) with your device's camera app.

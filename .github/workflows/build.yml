@@ -17,8 +17,13 @@ jobs:
     strategy:
       matrix:
         platform:
-          - { target: ios, runner: macos-latest, artifact-path: ./ios/*.ipa }
-          - { target: android, runner: ubuntu-latest, artifact-path: ./android/app/build/outputs/apk/release/*.apk }
+          - { name: iOS, platform: ios, runner: macos-latest, artifact-path: ./ios/*.ipa }
+          - {
+              name: Android,
+              platform: android,
+              runner: ubuntu-latest,
+              artifact-path: ./android/app/build/outputs/apk/release/*.apk,
+            }
 
     runs-on: ${{ matrix.platform.runner }}
 
@@ -35,14 +40,14 @@ jobs:
         run: npm ci
 
       - name: Run 'expo prebuild'
-        run: npx expo prebuild -p ${{ matrix.platform.target }}
+        run: npx expo prebuild -p ${{ matrix.platform.platform }}
 
       - name: Build Android Release
-        if: matrix.platform.target == 'android'
+        if: matrix.platform.name == 'Android'
         run: cd android && ./gradlew assembleRelease
 
       - name: Build Xcode workspace
-        if: matrix.platform.target == 'ios'
+        if: matrix.platform.name == 'iOS'
         run: |
           cd ios
           xcodebuild archive \
@@ -57,7 +62,7 @@ jobs:
             AD_HOC_CODE_SIGNING_ALLOWED=YES
 
       - name: Download and run `xcarchive_to_ipa.sh`
-        if: matrix.platform.target == 'ios'
+        if: matrix.platform.name == 'iOS'
         run: |
           cd ios
           curl -LO https://github.com/JustFrederik/Compile-to-ipa-without-developer-account/raw/refs/heads/main/xcarchive_to_ipa.sh
@@ -66,5 +71,5 @@ jobs:
       - name: Upload build artifact
         uses: actions/upload-artifact@v4
         with:
-          name: adx-level-browser-${{ matrix.platform.target }}
+          name: ADX-Level-Browser-${{ matrix.platform.name }}-${{ github.sha }}
           path: ${{ matrix.platform.artifact-path }}
