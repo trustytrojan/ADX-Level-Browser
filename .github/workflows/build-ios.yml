@@ -1,7 +1,14 @@
-name: Build Expo iOS IPA
+name: Build for iOS
 
 on:
   push:
+    branches: [main]
+    paths-ignore:
+      - '*.md'
+      - '*.txt'
+      - .github/workflows/build-android.yml
+  pull_request:
+    branches: [main]
     paths-ignore:
       - '*.md'
       - '*.txt'

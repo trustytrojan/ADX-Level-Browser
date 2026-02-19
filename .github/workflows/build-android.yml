@@ -2,6 +2,13 @@ name: Build for Android
 
 on:
   push:
+    branches: [main]
+    paths-ignore:
+      - '*.md'
+      - '*.txt'
+      - .github/workflows/build-ios.yml
+  pull_request:
+    branches: [main]
     paths-ignore:
       - '*.md'
       - '*.txt'
