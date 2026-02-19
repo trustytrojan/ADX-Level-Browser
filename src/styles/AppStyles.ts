@@ -94,6 +94,7 @@ export const styles = StyleSheet.create({
   },
   songsList: {
     flex: 1,
+    marginTop: 8,
     paddingHorizontal: 16,
   },
   resultButton: {
@@ -465,6 +466,17 @@ export const styles = StyleSheet.create({
   },
   reviewModalClearButtonText: {
     color: '#ff6b6b',
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  reviewModalDownloadOnlyButton: {
+    paddingVertical: 12,
+    paddingHorizontal: 20,
+    borderRadius: 6,
+    alignItems: 'center',
+  },
+  reviewModalDownloadOnlyButtonText: {
+    color: '#007AFF',
     fontSize: 16,
     fontWeight: '600',
   },

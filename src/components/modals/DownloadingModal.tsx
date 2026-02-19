@@ -9,6 +9,7 @@ interface DownloadingModalProps {
   visible: boolean;
   downloadJobs: DownloadJobItem[];
   hasErrors: boolean;
+  showCloseOnComplete?: boolean;
   onDismiss?: () => void;
 }
 
@@ -16,6 +17,7 @@ export const DownloadingModal = ({
   visible,
   downloadJobs,
   hasErrors,
+  showCloseOnComplete = false,
   onDismiss,
 }: DownloadingModalProps) => {
   // Count completed jobs
@@ -90,12 +92,12 @@ export const DownloadingModal = ({
             })}
           </ScrollView>
 
-          {isComplete && hasErrors && onDismiss && (
+          {isComplete && (hasErrors || showCloseOnComplete) && onDismiss && (
             <TouchableOpacity
               style={styles.downloadingModalCompleteButton}
               onPress={onDismiss}
             >
-              <Text style={styles.downloadingModalCompleteButtonText}>Dismiss</Text>
+              <Text style={styles.downloadingModalCompleteButtonText}>Close</Text>
             </TouchableOpacity>
           )}
 

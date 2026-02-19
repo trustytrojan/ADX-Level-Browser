@@ -17,7 +17,7 @@ interface SongListProps {
   refreshing: boolean;
   onRefresh: () => void;
   useRomanizedMetadata: boolean;
-  cacheVersion?: number;
+  downloadedStateVersion?: number;
 }
 
 export const SongList = ({
@@ -32,15 +32,22 @@ export const SongList = ({
   refreshing,
   onRefresh,
   useRomanizedMetadata,
-  cacheVersion = 0,
+  downloadedStateVersion = 0,
 }: SongListProps) => {
   const [downloadedIds, setDownloadedIds] = useState<Set<string>>(new Set());
 
-  // Clear downloaded IDs when cache is cleared
+  // Re-check downloaded status when cache/download state changes
   useEffect(() => {
-    if (cacheVersion > 0)
-      setDownloadedIds(new Set());
-  }, [cacheVersion]);
+    const next = new Set<string>();
+    songs.forEach((song) => {
+      const songId = song.id || '';
+      const file = getFileForSong(song);
+      const folder = getFolderForSong(song);
+      if (file.exists || folder.exists)
+        next.add(songId);
+    });
+    setDownloadedIds(next);
+  }, [downloadedStateVersion, songs]);
 
   const viewableItemsChanged = useRef(({ viewableItems }: { viewableItems: Array<{ item: SongItem }> }) => {
     setDownloadedIds((prev) => {
@@ -97,7 +104,7 @@ export const SongList = ({
 
   return (
     <>
-      <Text style={styles.sectionLabel}>Song List</Text>
+      {/* <Text style={styles.sectionLabel}>Song List</Text> */}
       <FlatList
         style={styles.songsList}
         data={songs}

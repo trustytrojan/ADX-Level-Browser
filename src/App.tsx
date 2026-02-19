@@ -141,7 +141,10 @@ export default function App() {
     showDownloadingModal,
     showImportingModal,
     importingSongCount,
+    showCloseOnComplete,
+    downloadCompletionVersion,
     startDownloadFlow,
+    startDownloadOnlyFlow,
     dismissDownloading,
   } = useDownloadFlow(settings.downloadVideos);
 
@@ -196,6 +199,16 @@ export default function App() {
     setShowReviewSelectionModal(false);
     setToDownload(new Set());
     startDownloadFlow(songsToDownload);
+  };
+
+  const handleStartDownloadOnly = () => {
+    const songsToDownload = songs.filter((song) => toDownload.has(song.id || ''));
+    if (songsToDownload.length === 0)
+      return;
+
+    setShowReviewSelectionModal(false);
+    setToDownload(new Set());
+    startDownloadOnlyFlow(songsToDownload);
   };
 
   const handleRefresh = async () => {
@@ -301,7 +314,7 @@ export default function App() {
         useRomanizedMetadata={settings.useRomanizedMetadata}
         refreshing={refreshing}
         onRefresh={handleRefresh}
-        cacheVersion={cacheVersion}
+        downloadedStateVersion={cacheVersion + downloadCompletionVersion}
       />
 
       {toDownload.size > 0 && !showDownloadingModal && (
@@ -312,7 +325,7 @@ export default function App() {
         >
           <MaterialCommunityIcons name='playlist-check' size={24} color='#fff' />
           <Text style={styles.downloadFabText}>
-            Review selection ({toDownload.size})
+            Review Selection ({toDownload.size})
           </Text>
         </TouchableOpacity>
       )}
@@ -344,6 +357,7 @@ export default function App() {
         onRemoveSong={handleRemoveSong}
         onClearSelection={handleClearSelection}
         onDownload={handleStartDownload}
+        onDownloadOnly={handleStartDownloadOnly}
         onClose={() => setShowReviewSelectionModal(false)}
         useRomanizedMetadata={settings.useRomanizedMetadata}
       />
@@ -352,6 +366,7 @@ export default function App() {
         visible={showDownloadingModal}
         downloadJobs={downloadJobs}
         hasErrors={hasErrors}
+        showCloseOnComplete={showCloseOnComplete}
         onDismiss={dismissDownloading}
       />
 

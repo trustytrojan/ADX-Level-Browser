@@ -13,6 +13,7 @@ interface ReviewSelectionModalProps {
   onRemoveSong: (songId: string) => void;
   onClearSelection: () => void;
   onDownload: () => void;
+  onDownloadOnly?: () => void;
   onClose: () => void;
   useRomanizedMetadata?: boolean;
 }
@@ -23,6 +24,7 @@ export const ReviewSelectionModal = ({
   onRemoveSong,
   onClearSelection,
   onDownload,
+  onDownloadOnly,
   onClose,
   useRomanizedMetadata = false,
 }: ReviewSelectionModalProps) => {
@@ -53,6 +55,7 @@ export const ReviewSelectionModal = ({
   // Check if all selected songs are already downloaded
   const allDownloaded = selectedSongs.length > 0
     && selectedSongs.every((song) => downloadedIds.has(song.id || ''));
+  const hasUncachedSongs = selectedSongs.some((song) => !downloadedIds.has(song.id || ''));
 
   return (
     <MyModal
@@ -102,6 +105,16 @@ export const ReviewSelectionModal = ({
             >
               <Text style={styles.reviewModalClearButtonText}>Clear Selection</Text>
             </TouchableOpacity>
+
+            {hasUncachedSongs && onDownloadOnly && (
+              <TouchableOpacity
+                style={styles.reviewModalDownloadOnlyButton}
+                onPress={onDownloadOnly}
+              >
+                <Text style={styles.reviewModalDownloadOnlyButtonText}>Download Only</Text>
+              </TouchableOpacity>
+            )}
+
             <TouchableOpacity
               style={styles.reviewModalDownloadButton}
               onPress={onDownload}
