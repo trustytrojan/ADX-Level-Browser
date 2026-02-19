@@ -2,7 +2,6 @@ name: Comment on pull request
 
 on:
   workflow_run:
-    workflows: ['Build for iOS', 'Build for Android']
     types: [completed]
 
 jobs:
