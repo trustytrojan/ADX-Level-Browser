@@ -1,10 +1,11 @@
-import { Modal, Pressable, Text, View, Switch, ActivityIndicator, ScrollView } from 'react-native';
+import { Pressable, Text, View, Switch, ActivityIndicator, ScrollView } from 'react-native';
 import { useState, useEffect } from 'react';
 import { styles } from '../../styles/AppStyles';
 import { clearDownloadCache } from '../../utils/fileSystem';
 import { loadSources, deleteSource } from '../../services/sources';
 import { SourcesList } from '../SourcesList';
 import type { AppSettings, Source } from '../../types';
+import MyModal from './MyModal';
 
 interface SettingsModalProps {
   visible: boolean;
@@ -81,7 +82,7 @@ export const SettingsModal = ({
 
   return (
     <>
-      <Modal
+      <MyModal
         visible={visible}
         animationType="none"
         transparent={true}
@@ -156,7 +157,7 @@ export const SettingsModal = ({
             </ScrollView>
           </View>
         </Pressable>
-      </Modal>
+      </MyModal>
     </>
   );
 };

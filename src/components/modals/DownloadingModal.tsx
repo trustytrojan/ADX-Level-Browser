@@ -1,7 +1,8 @@
-import { Modal, Text, View, ActivityIndicator, ScrollView, TouchableOpacity } from 'react-native';
+import { Text, View, ActivityIndicator, ScrollView, TouchableOpacity } from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import type { DownloadJobItem } from '../../types';
 import { styles } from '../../styles/AppStyles';
+import MyModal from './MyModal';
 
 interface DownloadingModalProps {
   visible: boolean;
@@ -23,7 +24,7 @@ export const DownloadingModal = ({
   const isComplete = allComplete || hasErrors;
 
   return (
-    <Modal
+    <MyModal
       visible={visible}
       animationType="none"
       transparent={true}
@@ -118,6 +119,6 @@ export const DownloadingModal = ({
           )}
         </View>
       </View>
-    </Modal>
+    </MyModal>
   );
 };

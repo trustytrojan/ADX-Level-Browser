@@ -1,7 +1,8 @@
-import { Modal, Text, View, ScrollView, TouchableOpacity } from 'react-native';
+import { Text, View, ScrollView, TouchableOpacity } from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import type { SongItem } from '../../types';
 import { styles } from '../../styles/AppStyles';
+import MyModal from './MyModal';
 
 interface ReviewSelectionModalProps {
   visible: boolean;
@@ -23,7 +24,7 @@ export const ReviewSelectionModal = ({
   useRomanizedMetadata = false,
 }: ReviewSelectionModalProps) => {
   return (
-    <Modal
+    <MyModal
       visible={visible}
       animationType="none"
       transparent={true}
@@ -95,6 +96,6 @@ export const ReviewSelectionModal = ({
           </View>
         </View>
       </View>
-    </Modal>
+    </MyModal>
   );
 };

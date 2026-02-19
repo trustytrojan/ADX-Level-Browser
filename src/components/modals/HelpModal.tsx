@@ -1,6 +1,7 @@
-import { Modal, Pressable, Text, View } from 'react-native';
+import { Pressable, Text, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { styles } from '../../styles/AppStyles';
+import MyModal from './MyModal';
 
 interface HelpModalProps {
   visible: boolean;
@@ -9,7 +10,7 @@ interface HelpModalProps {
 
 export const HelpModal = ({ visible, onClose }: HelpModalProps) => {
   return (
-    <Modal
+    <MyModal
       visible={visible}
       animationType="none"
       transparent={true}
@@ -39,6 +40,6 @@ export const HelpModal = ({ visible, onClose }: HelpModalProps) => {
           </Pressable>
         </View>
       </View>
-    </Modal>
+    </MyModal>
   );
 };

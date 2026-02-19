@@ -1,7 +1,8 @@
-import { Modal, Pressable, Text, View, TextInput, ActivityIndicator, Alert } from 'react-native';
+import { Pressable, Text, View, TextInput, ActivityIndicator, Alert } from 'react-native';
 import { useState } from 'react';
 import { styles } from '../../styles/AppStyles';
 import { addSource } from '../../services/sources';
+import MyModal from './MyModal';
 
 interface AddSourceModalProps {
   visible: boolean;
@@ -51,7 +52,7 @@ export const AddSourceModal = ({ visible, onClose, onSourceAdded }: AddSourceMod
   };
 
   return (
-    <Modal
+    <MyModal
       visible={visible}
       animationType="none"
       transparent={true}
@@ -127,6 +128,6 @@ export const AddSourceModal = ({ visible, onClose, onSourceAdded }: AddSourceMod
           </View>
         </View>
       </View>
-    </Modal>
+    </MyModal>
   );
 };

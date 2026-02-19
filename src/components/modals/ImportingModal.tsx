@@ -1,5 +1,6 @@
-import { Modal, Text, View, ActivityIndicator } from 'react-native';
+import { Text, View, ActivityIndicator } from 'react-native';
 import { styles } from '../../styles/AppStyles';
+import MyModal from './MyModal';
 
 interface ImportingModalProps {
   visible: boolean;
@@ -13,7 +14,7 @@ export const ImportingModal = ({
   const isMultiple = songCount > 1;
   
   return (
-    <Modal
+    <MyModal
       visible={visible}
       animationType="none"
       transparent={true}
@@ -40,6 +41,6 @@ export const ImportingModal = ({
           </View>
         </View>
       </View>
-    </Modal>
+    </MyModal>
   );
 };

@@ -7,7 +7,7 @@ import { SongList } from './components/SongList';
 import { HelpModal } from './components/modals/HelpModal';
 import { SettingsModal } from './components/modals/SettingsModal';
 import { AddSourceModal } from './components/modals/AddSourceModal';
-import { DownloadingModal } from './components/modals/DownloadingModalNew';
+import { DownloadingModal } from './components/modals/DownloadingModal';
 import { ImportingModal } from './components/modals/ImportingModal';
 import { ReviewSelectionModal } from './components/modals/ReviewSelectionModal';
 import { useDownload } from './hooks/useDownload';
