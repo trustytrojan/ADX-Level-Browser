@@ -1,0 +1,77 @@
+name: Build
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [master]
+    paths: ['**.ts', '**.tsx', '*.json', .github/workflows/*.yml]
+  pull_request:
+    branches: [master]
+    paths: ['**.ts', '**.tsx', '*.json', .github/workflows/*.yml]
+
+env:
+  PROJECT_NAME: ADXLevels
+
+jobs:
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        platform:
+          - { name: iOS, platform: ios, runner: macos-latest, artifact-path: ./ios/*.ipa }
+          - {
+              name: Android,
+              platform: android,
+              runner: ubuntu-latest,
+              artifact-path: ./android/app/build/outputs/apk/release/*.apk,
+            }
+
+    name: ${{ matrix.platform.name }}
+    runs-on: ${{ matrix.platform.runner }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: 25.6.0
+
+      - name: Install Dependencies
+        run: npm ci
+
+      - name: Run 'expo prebuild'
+        run: npx expo prebuild -p ${{ matrix.platform.platform }}
+
+      - name: Build Android Release
+        if: matrix.platform.name == 'Android'
+        run: cd android && ./gradlew assembleRelease
+
+      - name: Build Xcode workspace
+        if: matrix.platform.name == 'iOS'
+        run: |
+          cd ios
+          xcodebuild archive \
+            -workspace $PROJECT_NAME.xcworkspace \
+            -scheme $PROJECT_NAME \
+            -configuration Release \
+            -archivePath $PROJECT_NAME.xcarchive \
+            CODE_SIGNING_ALLOWED=NO \
+            CODE_SIGNING_REQUIRED=NO \
+            CODE_SIGN_ENTITLEMENTS="" \
+            CODE_SIGNING_METHOD=manual \
+            AD_HOC_CODE_SIGNING_ALLOWED=YES
+
+      - name: Download and run `xcarchive_to_ipa.sh`
+        if: matrix.platform.name == 'iOS'
+        run: |
+          cd ios
+          curl -LO https://github.com/JustFrederik/Compile-to-ipa-without-developer-account/raw/refs/heads/main/xcarchive_to_ipa.sh
+          bash xcarchive_to_ipa.sh $PROJECT_NAME.xcarchive
+
+      - name: Upload build artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ADX-Level-Browser-${{ matrix.platform.name }}-${{ github.sha }}
+          path: ${{ matrix.platform.artifact-path }}
