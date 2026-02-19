@@ -1,4 +1,4 @@
-import { Alert, Platform, AppState } from 'react-native';
+import { Alert, AppState, Platform } from 'react-native';
 import { Directory, File, Paths } from 'expo-file-system';
 import { getContentUriAsync } from 'expo-file-system/legacy';
 import * as Sharing from 'expo-sharing';
@@ -12,9 +12,8 @@ export const openWithAstroDX = async (file: File, songTitle: string): Promise<vo
   const isAppInBackground = appState !== 'active';
 
   // If app is in background or an intent is already active, do nothing
-  if (isAppInBackground || isIntentActive) {
+  if (isAppInBackground || isIntentActive)
     return;
-  }
 
   if (Platform.OS === 'android') {
     try {
@@ -25,7 +24,7 @@ export const openWithAstroDX = async (file: File, songTitle: string): Promise<vo
         flags: 1,
         packageName: 'com.Reflektone.AstroDX',
       });
-      
+
       // Reset flag after a delay (user will have switched apps)
       setTimeout(() => {
         isIntentActive = false;
@@ -33,13 +32,12 @@ export const openWithAstroDX = async (file: File, songTitle: string): Promise<vo
     } catch (error) {
       isIntentActive = false;
       console.error('Intent error:', error);
-      
+
       // Check if it's the "already started" error
       const errorMessage = error instanceof Error ? error.message : '';
-      if (errorMessage.includes('already started')) {
+      if (errorMessage.includes('already started'))
         return;
-      }
-      
+
       Alert.alert(
         'Cannot Open File',
         'AstroDX app not found. Would you like to share instead?',
@@ -47,13 +45,12 @@ export const openWithAstroDX = async (file: File, songTitle: string): Promise<vo
           {
             text: 'Share',
             onPress: async () => {
-              if (await Sharing.isAvailableAsync()) {
+              if (await Sharing.isAvailableAsync())
                 await Sharing.shareAsync(file.uri);
-              }
-            }
+            },
           },
-          { text: 'Cancel', style: 'cancel' }
-        ]
+          { text: 'Cancel', style: 'cancel' },
+        ],
       );
     }
   } else {
@@ -64,12 +61,11 @@ export const openWithAstroDX = async (file: File, songTitle: string): Promise<vo
         {
           text: 'Share',
           onPress: async () => {
-            if (await Sharing.isAvailableAsync()) {
+            if (await Sharing.isAvailableAsync())
               await Sharing.shareAsync(file.uri);
-            }
-          }
+          },
         },
-      ]
+      ],
     );
   }
 };
@@ -77,17 +73,17 @@ export const openWithAstroDX = async (file: File, songTitle: string): Promise<vo
 export const openMultipleWithAstroDX = async (
   files: File[],
   onCompressionStart?: () => void,
-  onCompressionEnd?: () => void
+  onCompressionEnd?: () => void,
 ): Promise<void> => {
-  if (files.length === 0) return;
+  if (files.length === 0)
+    return;
 
   const appState = AppState.currentState;
   const isAppInBackground = appState !== 'active';
 
   // If app is in background or an intent is already active, don't proceed
-  if (isAppInBackground || isIntentActive) {
+  if (isAppInBackground || isIntentActive)
     return;
-  }
 
   try {
     const outputPath = `${Paths.document.uri}combined-songs.adx`;
@@ -97,7 +93,7 @@ export const openMultipleWithAstroDX = async (
       const { zip, unzip } = await import('react-native-zip-archive');
 
       // Zip all ADX files into one combined ADX file
-      const filePaths = files.map(f => f.uri);
+      const filePaths = files.map((f) => f.uri);
 
       // remove the ".adx" extension, use these as the destination directory for unzipping each adx
       const withoutExtensions: string[] = [];
@@ -108,15 +104,14 @@ export const openMultipleWithAstroDX = async (
         await unzip(uri, withoutExt);
       }
 
-      if (combinedSongsFile.exists) {
+      if (combinedSongsFile.exists)
         combinedSongsFile.delete();
-      }
 
       // zip all the unzipped song folders into "combined-songs.adx"
       await zip(withoutExtensions, outputPath);
 
       // delete all the unzipped song folders
-      withoutExtensions.forEach(uri => new Directory(uri).delete());
+      withoutExtensions.forEach((uri) => new Directory(uri).delete());
     } else if (Platform.OS === 'ios') {
       const fflate = await import('fflate');
 
@@ -132,7 +127,7 @@ export const openMultipleWithAstroDX = async (
       onCompressionStart?.();
 
       // Give React a brief moment to render the modal before starting the synchronous compression
-      await new Promise(resolve => setTimeout(resolve, 50));
+      await new Promise((resolve) => setTimeout(resolve, 50));
 
       const finalAdx = fflate.zipSync(decompressedSongFolders);
 

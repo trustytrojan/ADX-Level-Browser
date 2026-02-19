@@ -1,5 +1,5 @@
-import { Text, FlatList, RefreshControl, ActivityIndicator, View } from 'react-native';
-import { useRef, useCallback, useState, useEffect } from 'react';
+import { ActivityIndicator, FlatList, RefreshControl, Text, View } from 'react-native';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import type { SongItem } from '../types';
 import { SongElement } from './SongElement';
 import { getFileForSong, getFolderForSong } from '../utils/fileSystem';
@@ -57,16 +57,16 @@ export const SongList = ({
 
   const handleEndReached = () => {
     // Only load more if there are actually more pages available
-    if (!loading && !loadingMore && hasMore && songs.length > 0) {
+    if (!loading && !loadingMore && hasMore && songs.length > 0)
       onLoadMore();
-    }
   };
 
   const renderFooter = useCallback(() => {
-    if (!loadingMore) return null;
+    if (!loadingMore)
+      return null;
     return (
       <View style={{ padding: 16, alignItems: 'center' }}>
-        <ActivityIndicator size="small" color="#007AFF" />
+        <ActivityIndicator size='small' color='#007AFF' />
       </View>
     );
   }, [loadingMore]);
@@ -84,7 +84,7 @@ export const SongList = ({
         />
       );
     },
-    [downloadedIds, isInQueue, onSongPress, useRomanizedMetadata]
+    [downloadedIds, isInQueue, onSongPress, useRomanizedMetadata],
   );
 
   return (
@@ -95,11 +95,7 @@ export const SongList = ({
         data={songs}
         keyExtractor={(item) => `${item.sourceId}:${item.id}`}
         renderItem={renderItem}
-        ListEmptyComponent={
-          !loading && searchText ? (
-            <Text style={styles.emptyText}>No songs found</Text>
-          ) : null
-        }
+        ListEmptyComponent={!loading && searchText ? <Text style={styles.emptyText}>No songs found</Text> : null}
         ListFooterComponent={renderFooter}
         onViewableItemsChanged={viewableItemsChanged.current}
         viewabilityConfig={viewabilityConfig}
@@ -113,7 +109,7 @@ export const SongList = ({
           <RefreshControl
             refreshing={refreshing}
             onRefresh={onRefresh}
-            tintColor="#007AFF"
+            tintColor='#007AFF'
             colors={['#007AFF']}
           />
         }

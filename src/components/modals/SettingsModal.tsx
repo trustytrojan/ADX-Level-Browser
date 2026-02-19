@@ -1,8 +1,8 @@
-import { Pressable, Text, View, Switch, ActivityIndicator, ScrollView } from 'react-native';
-import { useState, useEffect } from 'react';
+import { ActivityIndicator, Pressable, ScrollView, Switch, Text, View } from 'react-native';
+import { useEffect, useState } from 'react';
 import { styles } from '../../styles/AppStyles';
 import { clearDownloadCache } from '../../utils/fileSystem';
-import { loadSources, deleteSource } from '../../services/sources';
+import { deleteSource, loadSources } from '../../services/sources';
 import { SourcesList } from '../SourcesList';
 import type { AppSettings, Source } from '../../types';
 import MyModal from './MyModal';
@@ -29,7 +29,7 @@ export const SettingsModal = ({
   const [clearingCache, setClearingCache] = useState(false);
   const [cacheCleared, setCacheCleared] = useState(false);
   const [sources, setSources] = useState<Source[]>([]);
-  
+
   const handleRequestAddSource = () => {
     onRequestAddSource();
   };
@@ -84,21 +84,28 @@ export const SettingsModal = ({
     <>
       <MyModal
         visible={visible}
-        animationType="none"
+        animationType='none'
         transparent={true}
         onRequestClose={onClose}
       >
-        <Pressable 
+        <Pressable
           style={styles.helpModalOverlay}
         >
-          <View 
+          <View
             style={styles.helpModalContent}
           >
             <ScrollView showsVerticalScrollIndicator={false}>
               <Text style={styles.helpModalTitle}>Settings</Text>
-              
+
               <View style={{ marginBottom: 24 }}>
-                <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
+                <View
+                  style={{
+                    flexDirection: 'row',
+                    justifyContent: 'space-between',
+                    alignItems: 'center',
+                    marginBottom: 8,
+                  }}
+                >
                   <Text style={styles.settingsModalText}>Romanized Metadata</Text>
                   <Switch
                     value={settings.useRomanizedMetadata}
@@ -109,7 +116,14 @@ export const SettingsModal = ({
                   Display romanized song titles, artists, and designers when available
                 </Text>
 
-                <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
+                <View
+                  style={{
+                    flexDirection: 'row',
+                    justifyContent: 'space-between',
+                    alignItems: 'center',
+                    marginBottom: 8,
+                  }}
+                >
                   <Text style={styles.settingsModalText}>Download Videos</Text>
                   <Switch
                     value={settings.downloadVideos}
@@ -138,13 +152,11 @@ export const SettingsModal = ({
                   onPress={handleClearCache}
                   disabled={clearingCache}
                 >
-                  {clearingCache ? (
-                    <ActivityIndicator size="small" color="#fff" />
-                  ) : cacheCleared ? (
-                    <Text style={styles.helpModalCloseButtonText}>✓ Cache Cleared</Text>
-                  ) : (
-                    <Text style={styles.helpModalCloseButtonText}>Clear Download Cache</Text>
-                  )}
+                  {clearingCache
+                    ? <ActivityIndicator size='small' color='#fff' />
+                    : cacheCleared
+                    ? <Text style={styles.helpModalCloseButtonText}>✓ Cache Cleared</Text>
+                    : <Text style={styles.helpModalCloseButtonText}>Clear Download Cache</Text>}
                 </Pressable>
 
                 <Pressable

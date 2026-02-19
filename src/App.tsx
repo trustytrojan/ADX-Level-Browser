@@ -1,7 +1,7 @@
 import { StatusBar } from 'expo-status-bar';
-import { View, ActivityIndicator, AppState, Text, Pressable, Linking, Platform, TouchableOpacity } from 'react-native';
-import { useEffect, useRef, useState, useCallback } from 'react';
-import type { SongItem, AppSettings } from './types';
+import { ActivityIndicator, AppState, Linking, Platform, Pressable, Text, TouchableOpacity, View } from 'react-native';
+import { useCallback, useEffect, useRef, useState } from 'react';
+import type { AppSettings, SongItem } from './types';
 import { SearchBar } from './components/SearchBar';
 import { SongList } from './components/SongList';
 import { HelpModal } from './components/modals/HelpModal';
@@ -11,10 +11,10 @@ import { DownloadingModal } from './components/modals/DownloadingModal';
 import { ImportingModal } from './components/modals/ImportingModal';
 import { ReviewSelectionModal } from './components/modals/ReviewSelectionModal';
 import { useDownload } from './hooks/useDownload';
-import { resetIntentLock, openWithAstroDX, openMultipleWithAstroDX } from './utils/sharing';
-import { zipSongFolder, unzipAdxFile } from './services/download';
+import { openMultipleWithAstroDX, openWithAstroDX, resetIntentLock } from './utils/sharing';
+import { unzipAdxFile, zipSongFolder } from './services/download';
 import { getFileForSong, getFolderForSong } from './utils/fileSystem';
-import { File, Directory, Paths } from 'expo-file-system';
+import { Directory, File, Paths } from 'expo-file-system';
 import { styles } from './styles/AppStyles';
 import { loadNextPage, resetPaginationState, type SourcePaginationState } from './services/sources';
 import { loadSettings, saveSettings } from './services/settings';
@@ -57,7 +57,7 @@ export default function App() {
   const loadInitialSongs = async (search: string = '') => {
     setLoading(true);
     setError(null);
-    
+
     try {
       const initialPagination = resetPaginationState();
       const result = await loadNextPage(initialPagination, search);
@@ -74,26 +74,25 @@ export default function App() {
   // Check if there are more pages to load from any source
   const hasMorePages = () => {
     const states = Object.values(paginationState);
-    return states.length === 0 || states.some(state => state.hasMore);
+    return states.length === 0 || states.some((state) => state.hasMore);
   };
 
   // Load more songs (next page)
   const loadMoreSongs = async () => {
     const hasMore = hasMorePages();
-    
-    if (!hasMore || loadingMore || loading) {
+
+    if (!hasMore || loadingMore || loading)
       return;
-    }
 
     setLoadingMore(true);
     try {
       const result = await loadNextPage(paginationState, searchText);
       if (result.songs.length > 0) {
         // Deduplicate songs by their unique key (sourceId:id)
-        setSongs(prev => {
-          const existingKeys = new Set(prev.map(song => `${song.sourceId}:${song.id}`));
+        setSongs((prev) => {
+          const existingKeys = new Set(prev.map((song) => `${song.sourceId}:${song.id}`));
           const newUniqueSongs = result.songs.filter(
-            song => !existingKeys.has(`${song.sourceId}:${song.id}`)
+            (song) => !existingKeys.has(`${song.sourceId}:${song.id}`),
           );
           return [...prev, ...newUniqueSongs];
         });
@@ -115,11 +114,10 @@ export default function App() {
   // Handle search with debounce
   const handleSearch = (text: string) => {
     setSearchText(text);
-    
+
     // Clear existing timeout
-    if (searchTimeout.current) {
+    if (searchTimeout.current)
       clearTimeout(searchTimeout.current);
-    }
 
     // Set new timeout for 500ms
     searchTimeout.current = setTimeout(() => {
@@ -129,18 +127,16 @@ export default function App() {
 
   const handleSubmitEditing = () => {
     // Clear timeout and search immediately
-    if (searchTimeout.current) {
+    if (searchTimeout.current)
       clearTimeout(searchTimeout.current);
-    }
     loadInitialSongs(searchText);
   };
 
   // Cleanup timeout on unmount
   useEffect(() => {
     return () => {
-      if (searchTimeout.current) {
+      if (searchTimeout.current)
         clearTimeout(searchTimeout.current);
-      }
     };
   }, []);
 
@@ -168,10 +164,9 @@ export default function App() {
 
   // Watch for download completion
   useEffect(() => {
-    const allComplete = downloadJobs.length > 0 && downloadJobs.every(job => job.status === 'COMPLETED');
-    if (allComplete && showDownloadingModal && !hasErrors) {
+    const allComplete = downloadJobs.length > 0 && downloadJobs.every((job) => job.status === 'COMPLETED');
+    if (allComplete && showDownloadingModal && !hasErrors)
       handleDownloadComplete();
-    }
   }, [downloadJobs, showDownloadingModal, hasErrors]);
 
   const handleDismissDownloading = () => {
@@ -183,11 +178,10 @@ export default function App() {
     const songId = item.id || '';
     setToDownload((prev) => {
       const next = new Set(prev);
-      if (next.has(songId)) {
+      if (next.has(songId))
         next.delete(songId);
-      } else {
+      else
         next.add(songId);
-      }
       return next;
     });
   }, []);
@@ -212,7 +206,8 @@ export default function App() {
   const handleStartDownload = () => {
     setShowReviewSelectionModal(false);
     const songsToDownload = songs.filter((song) => toDownload.has(song.id || ''));
-    if (songsToDownload.length === 0) return;
+    if (songsToDownload.length === 0)
+      return;
 
     setShowDownloadingModal(true);
     startDownloads(songsToDownload);
@@ -222,7 +217,7 @@ export default function App() {
     setToDownload(new Set());
 
     const completedItems = getCompletedItems();
-    
+
     if (completedItems.length === 0) {
       setShowDownloadingModal(false);
       clearDownloads();
@@ -240,78 +235,76 @@ export default function App() {
         const item = completedItems[0];
         const adxFile = getFileForSong(item.item);
         const folder = getFolderForSong(item.item);
-        
+
         if (!adxFile.exists && folder.exists) {
           // Only folder exists: zip it
           await zipSongFolder(folder, adxFile);
         }
-        
+
         // Now the .adx file should exist, import it
         setShowImportingModal(false);
         await openWithAstroDX(adxFile, item.title);
         clearDownloads();
       } else if (completedItems.length > 1) {
         // Multiple songs flow
-        
+
         // Ensure all songs have their folders ready
         for (const item of completedItems) {
           const adxFile = getFileForSong(item.item);
           const folder = getFolderForSong(item.item);
-          
+
           if (adxFile.exists && !folder.exists) {
             // Only .adx exists: unzip it
             await unzipAdxFile(adxFile, folder);
           }
           // If only folder exists or both exist, we're good
         }
-        
+
         // Now all songs should have folders, combine them
-        const folders = completedItems.map(item => getFolderForSong(item.item));
-        
+        const folders = completedItems.map((item) => getFolderForSong(item.item));
+
         // Combine all folders into combined-songs.adx
         const combinedAdxPath = `${Paths.document.uri}combined-songs.adx`;
         const combinedAdxFile = new File(combinedAdxPath);
-        
-        if (combinedAdxFile.exists) {
+
+        if (combinedAdxFile.exists)
           combinedAdxFile.delete();
-        }
-        
+
         if (Platform.OS === 'android') {
           const { zip } = await import('react-native-zip-archive');
-          const folderPaths = folders.map(f => f.uri);
+          const folderPaths = folders.map((f) => f.uri);
           await zip(folderPaths, combinedAdxPath);
         } else if (Platform.OS === 'ios') {
           const fflate = await import('fflate');
           const allSongFiles: Record<string, Uint8Array> = {};
-          
+
           // Read files from each folder
           const legacyFileSystem = await import('expo-file-system/legacy');
           for (const folder of folders) {
             const contents = await legacyFileSystem.readDirectoryAsync(folder.uri);
-            
+
             // Read all subdirectories (song folders)
             for (const itemName of contents) {
               const itemPath = `${folder.uri}/${itemName}`;
               const itemInfo = await legacyFileSystem.getInfoAsync(itemPath);
-              
+
               if (itemInfo.exists && itemInfo.isDirectory) {
                 // This is a song subdirectory, read its files
                 const songFiles = await legacyFileSystem.readDirectoryAsync(itemPath);
                 for (const fileName of songFiles) {
                   const filePath = `${itemPath}/${fileName}`;
                   const file = new File(filePath);
-                  if (file.exists) {
+                  if (file.exists)
                     allSongFiles[`${itemName}/${fileName}`] = file.bytesSync();
-                  }
                 }
               }
             }
           }
-          
+
           const zipped = fflate.zipSync(allSongFiles);
           combinedAdxFile.write(zipped);
         }
-        
+
         setShowImportingModal(false);
         await openWithAstroDX(combinedAdxFile, 'Combined Songs');
         clearDownloads();
@@ -340,18 +333,18 @@ export default function App() {
   };
 
   const handleSourceAdded = () => {
-    setSourcesVersion(v => v + 1);
+    setSourcesVersion((v) => v + 1);
     setShowAddSourceModal(false);
     setShouldReturnToSettings(false);
     setShowSettingsModal(true);
   };
-  
+
   const handleRequestAddSource = () => {
     setShouldReturnToSettings(true);
     setShowSettingsModal(false);
     setShowAddSourceModal(true);
   };
-  
+
   const handleAddSourceClose = () => {
     setShowAddSourceModal(false);
     if (shouldReturnToSettings) {
@@ -370,19 +363,19 @@ export default function App() {
               onPress={() => Linking.openURL('https://github.com/trustytrojan/adx-convert-browser')}
               hitSlop={12}
             >
-              <Ionicons name="logo-github" size={24} color="#9aa3b2" />
+              <Ionicons name='logo-github' size={24} color='#9aa3b2' />
             </Pressable>
-            <Pressable 
-              onPress={() => setShowSettingsModal(true)} 
+            <Pressable
+              onPress={() => setShowSettingsModal(true)}
               hitSlop={12}
             >
-              <Ionicons name="settings-outline" size={24} color="#9aa3b2" />
+              <Ionicons name='settings-outline' size={24} color='#9aa3b2' />
             </Pressable>
-            <Pressable 
-              onPress={() => setShowHelpModal(true)} 
+            <Pressable
+              onPress={() => setShowHelpModal(true)}
               hitSlop={12}
             >
-              <Entypo name="help-with-circle" size={24} color="#9aa3b2" />
+              <Entypo name='help-with-circle' size={24} color='#9aa3b2' />
             </Pressable>
           </View>
         </View>
@@ -395,7 +388,7 @@ export default function App() {
 
       {loading && (
         <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color="#007AFF" />
+          <ActivityIndicator size='large' color='#007AFF' />
           <Text style={styles.loadingText}>Loading songs from sources...</Text>
         </View>
       )}
@@ -403,7 +396,7 @@ export default function App() {
       {error && (
         <View style={styles.loadingContainer}>
           <View style={styles.errorContainer}>
-            <Ionicons name="close-circle" size={24} color="#ff6b6b" style={styles.errorIcon} />
+            <Ionicons name='close-circle' size={24} color='#ff6b6b' style={styles.errorIcon} />
             <Text style={styles.errorText}>{error}</Text>
           </View>
           <Text style={styles.errorSubtext}>Please check your connection and restart the app</Text>
@@ -430,7 +423,7 @@ export default function App() {
           onPress={handleReviewSelection}
           activeOpacity={0.8}
         >
-          <MaterialCommunityIcons name="playlist-check" size={24} color="#fff" />
+          <MaterialCommunityIcons name='playlist-check' size={24} color='#fff' />
           <Text style={styles.downloadFabText}>
             Review selection ({toDownload.size})
           </Text>

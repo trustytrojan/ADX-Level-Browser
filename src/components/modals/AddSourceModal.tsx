@@ -1,4 +1,4 @@
-import { Pressable, Text, View, TextInput, ActivityIndicator, Alert } from 'react-native';
+import { ActivityIndicator, Alert, Pressable, Text, TextInput, View } from 'react-native';
 import { useState } from 'react';
 import { styles } from '../../styles/AppStyles';
 import { addSource } from '../../services/sources';
@@ -32,7 +32,7 @@ export const AddSourceModal = ({ visible, onClose, onSourceAdded }: AddSourceMod
         baseUrl: sourceUrl.trim(),
         enabled: true,
       });
-      
+
       // Reset form and notify parent
       setSourceName('');
       setSourceUrl('');
@@ -54,17 +54,17 @@ export const AddSourceModal = ({ visible, onClose, onSourceAdded }: AddSourceMod
   return (
     <MyModal
       visible={visible}
-      animationType="none"
+      animationType='none'
       transparent={true}
       onRequestClose={handleClose}
     >
       <View style={styles.helpModalOverlay}>
-        <View 
+        <View
           style={styles.helpModalContent}
           onStartShouldSetResponder={() => true}
         >
           <Text style={styles.helpModalTitle}>Add Source</Text>
-          
+
           <View style={{ marginBottom: 24 }}>
             <Text style={{ color: '#9aa3b2', fontSize: 14, marginBottom: 8 }}>Source Name</Text>
             <TextInput
@@ -76,11 +76,11 @@ export const AddSourceModal = ({ visible, onClose, onSourceAdded }: AddSourceMod
                 fontSize: 14,
                 marginBottom: 16,
               }}
-              placeholder="e.g., My Custom Source"
-              placeholderTextColor="#9aa3b2"
+              placeholder='My Custom Source'
+              placeholderTextColor='#9aa3b2'
               value={sourceName}
               onChangeText={setSourceName}
-              autoCapitalize="words"
+              autoCapitalize='words'
             />
 
             <Text style={{ color: '#9aa3b2', fontSize: 14, marginBottom: 8 }}>Base URL</Text>
@@ -92,13 +92,13 @@ export const AddSourceModal = ({ visible, onClose, onSourceAdded }: AddSourceMod
                 borderRadius: 8,
                 fontSize: 14,
               }}
-              placeholder="https://example.com/api"
-              placeholderTextColor="#9aa3b2"
+              placeholder='https://example.com/api'
+              placeholderTextColor='#9aa3b2'
               value={sourceUrl}
               onChangeText={setSourceUrl}
-              autoCapitalize="none"
+              autoCapitalize='none'
               autoCorrect={false}
-              keyboardType="url"
+              keyboardType='url'
             />
           </View>
 
@@ -112,11 +112,9 @@ export const AddSourceModal = ({ visible, onClose, onSourceAdded }: AddSourceMod
               onPress={handleAdd}
               disabled={adding}
             >
-              {adding ? (
-                <ActivityIndicator size="small" color="#fff" />
-              ) : (
-                <Text style={styles.helpModalCloseButtonText}>Add Source</Text>
-              )}
+              {adding
+                ? <ActivityIndicator size='small' color='#fff' />
+                : <Text style={styles.helpModalCloseButtonText}>Add Source</Text>}
             </Pressable>
 
             <Pressable

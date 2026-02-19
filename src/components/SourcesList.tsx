@@ -1,4 +1,4 @@
-import { Text, View, Pressable, Alert } from 'react-native';
+import { Alert, Pressable, Text, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useState } from 'react';
 import type { Source } from '../types';
@@ -25,7 +25,7 @@ export const SourcesList = ({ sources, onDelete, onAddPress, onSourceUpdated }: 
           style: 'destructive',
           onPress: () => onDelete(source.id),
         },
-      ]
+      ],
     );
   };
 
@@ -47,7 +47,7 @@ export const SourcesList = ({ sources, onDelete, onAddPress, onSourceUpdated }: 
           style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}
           onPress={onAddPress}
         >
-          <Ionicons name="add-circle-outline" size={20} color="#007AFF" />
+          <Ionicons name='add-circle-outline' size={20} color='#007AFF' />
           <Text style={{ color: '#007AFF', fontSize: 14 }}>Add Source</Text>
         </Pressable>
       </View>
@@ -66,21 +66,25 @@ export const SourcesList = ({ sources, onDelete, onAddPress, onSourceUpdated }: 
           }}
         >
           <View style={{ flexShrink: 1, minWidth: 0 }}>
-            <Text numberOfLines={1} ellipsizeMode="tail" style={{ color: '#fff', fontSize: 14, fontWeight: '600' }}>{source.name}</Text>
-            <Text numberOfLines={1} ellipsizeMode="middle" style={{ color: '#9aa3b2', fontSize: 12, marginTop: 2 }}>{source.baseUrl}</Text>
+            <Text numberOfLines={1} ellipsizeMode='tail' style={{ color: '#fff', fontSize: 14, fontWeight: '600' }}>
+              {source.name}
+            </Text>
+            <Text numberOfLines={1} ellipsizeMode='middle' style={{ color: '#9aa3b2', fontSize: 12, marginTop: 2 }}>
+              {source.baseUrl}
+            </Text>
           </View>
           <View style={{ flexDirection: 'row', gap: 12 }}>
             <Pressable
               onPress={() => handleEditPress(source)}
               hitSlop={12}
             >
-              <Ionicons name="pencil-outline" size={20} color="#007AFF" />
+              <Ionicons name='pencil-outline' size={20} color='#007AFF' />
             </Pressable>
             <Pressable
               onPress={() => handleDeletePress(source)}
               hitSlop={12}
             >
-              <Ionicons name="trash-outline" size={20} color="#ff6b6b" />
+              <Ionicons name='trash-outline' size={20} color='#ff6b6b' />
             </Pressable>
           </View>
         </View>

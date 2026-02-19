@@ -1,14 +1,14 @@
 import * as FileSystem from 'expo-file-system/legacy';
-import { File, Directory, Paths } from 'expo-file-system';
+import { Directory, File, Paths } from 'expo-file-system';
 import { Platform } from 'react-native';
 import type { Song } from '../types';
-import { getSource, getTrackUrl, getImageUrl, getChartUrl, getVideoUrl } from './sources';
+import { getChartUrl, getImageUrl, getSource, getTrackUrl, getVideoUrl } from './sources';
 
 const sanitizeFilename = (s: string) => s.replace(/[^a-z0-9._-]/gi, '-');
 
 /**
  * Download a song from any source to an uncompressed folder
- * 
+ *
  * @param song - The song to download
  * @param outputFolder - The directory to save the song files to
  * @param downloadVideo - Whether to download the video file
@@ -16,14 +16,13 @@ const sanitizeFilename = (s: string) => s.replace(/[^a-z0-9._-]/gi, '-');
 export const downloadSong = async (
   song: Song,
   outputFolder: Directory,
-  downloadVideo: boolean = true
+  downloadVideo: boolean = true,
 ): Promise<void> => {
   // Get the source for this song
   const source = await getSource(song.sourceId);
-  
-  if (!source) {
+
+  if (!source)
     throw new Error(`Source "${song.sourceId}" not found`);
-  }
 
   const songDirName = sanitizeFilename(song.title);
 
@@ -56,7 +55,7 @@ export const downloadSong = async (
     // Only download video if enabled
     if (downloadVideo) {
       const videoPromise = fetch(videoUrl)
-        .then(resp => {
+        .then((resp) => {
           if (resp.status === 404)
             return videoFile.exists && videoFile.delete();
           if (!resp.ok)
@@ -65,7 +64,7 @@ export const downloadSong = async (
             throw new Error(`[downloadSong] [${videoUrl}] Content-Type is not video/mp4`);
           if (resp.bodyUsed)
             throw new Error(`[downloadSong] [${videoUrl}] resp.bodyUsed`);
-          return resp.arrayBuffer().then(buf => videoFile.write(new Uint8Array(buf)));
+          return resp.arrayBuffer().then((buf) => videoFile.write(new Uint8Array(buf)));
         });
       downloadPromises.push(videoPromise);
     }
@@ -84,17 +83,16 @@ export const downloadSong = async (
 
 /**
  * Zip a song folder into an .adx file
- * 
+ *
  * @param songFolder - The directory containing the song files
  * @param outputFile - The .adx file to create
  */
 export const zipSongFolder = async (
   songFolder: Directory,
-  outputFile: File
+  outputFile: File,
 ): Promise<void> => {
-  if (!songFolder.exists) {
+  if (!songFolder.exists)
     throw new Error(`Song folder does not exist: ${songFolder.uri}`);
-  }
 
   try {
     if (Platform.OS === 'android') {
@@ -108,23 +106,22 @@ export const zipSongFolder = async (
       // For simplicity, we'll use FileSystem.readDirectoryAsync to get contents
       const legacyFileSystem = await import('expo-file-system/legacy');
       const contents = await legacyFileSystem.readDirectoryAsync(songFolder.uri);
-      
+
       const filesToZip: Record<string, Uint8Array> = {};
-      
+
       // Read all subdirectories (song folders)
       for (const itemName of contents) {
         const itemPath = `${songFolder.uri}/${itemName}`;
         const itemInfo = await legacyFileSystem.getInfoAsync(itemPath);
-        
+
         if (itemInfo.exists && itemInfo.isDirectory) {
           // This is a song subdirectory, read its files
           const songFiles = await legacyFileSystem.readDirectoryAsync(itemPath);
           for (const fileName of songFiles) {
             const filePath = `${itemPath}/${fileName}`;
             const file = new File(filePath);
-            if (file.exists) {
+            if (file.exists)
               filesToZip[`${itemName}/${fileName}`] = file.bytesSync();
-            }
           }
         }
       }
@@ -140,17 +137,16 @@ export const zipSongFolder = async (
 
 /**
  * Unzip an .adx file into a song folder
- * 
+ *
  * @param adxFile - The .adx file to extract
  * @param outputFolder - The directory to extract the song files to
  */
 export const unzipAdxFile = async (
   adxFile: File,
-  outputFolder: Directory
+  outputFolder: Directory,
 ): Promise<void> => {
-  if (!adxFile.exists) {
+  if (!adxFile.exists)
     throw new Error(`ADX file does not exist: ${adxFile.uri}`);
-  }
 
   try {
     // Create the output folder if it doesn't exist
@@ -169,7 +165,7 @@ export const unzipAdxFile = async (
       for (const [path, content] of Object.entries(unzippedFiles)) {
         const filePath = `${outputFolder.uri}/${path}`;
         const file = new File(filePath);
-        
+
         // Create parent directory if needed
         const pathParts = path.split('/');
         if (pathParts.length > 1) {
@@ -177,7 +173,7 @@ export const unzipAdxFile = async (
           const parentDir = new Directory(outputFolder, parentPath);
           parentDir.create({ intermediates: true, idempotent: true });
         }
-        
+
         file.write(content);
       }
     }

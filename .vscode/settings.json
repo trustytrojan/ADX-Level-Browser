@@ -3,5 +3,6 @@
 		"npm install": true
 	},
 	"editor.tabSize": 2,
-	"editor.useTabStops": false
+	"editor.useTabStops": false,
+	"deno.enable": false
 }

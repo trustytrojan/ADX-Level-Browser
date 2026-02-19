@@ -1,4 +1,4 @@
-import { Text, View, ScrollView, TouchableOpacity } from 'react-native';
+import { ScrollView, Text, TouchableOpacity, View } from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import type { SongItem } from '../../types';
 import { styles } from '../../styles/AppStyles';
@@ -26,7 +26,7 @@ export const ReviewSelectionModal = ({
   return (
     <MyModal
       visible={visible}
-      animationType="none"
+      animationType='none'
       transparent={true}
       onRequestClose={onClose}
     >
@@ -38,7 +38,7 @@ export const ReviewSelectionModal = ({
           <View style={styles.reviewModalHeader}>
             <Text style={styles.reviewModalTitle}>Review Selection</Text>
             <TouchableOpacity onPress={onClose} hitSlop={12}>
-              <MaterialCommunityIcons name="close" size={24} color="#9aa3b2" />
+              <MaterialCommunityIcons name='close' size={24} color='#9aa3b2' />
             </TouchableOpacity>
           </View>
 
@@ -48,14 +48,8 @@ export const ReviewSelectionModal = ({
 
           <ScrollView style={styles.reviewModalList}>
             {selectedSongs.map((song) => {
-              const displayTitle =
-                useRomanizedMetadata && song.romanizedTitle
-                  ? song.romanizedTitle
-                  : song.title;
-              const displayArtist =
-                useRomanizedMetadata && song.romanizedArtist
-                  ? song.romanizedArtist
-                  : song.artist;
+              const displayTitle = useRomanizedMetadata && song.romanizedTitle ? song.romanizedTitle : song.title;
+              const displayArtist = useRomanizedMetadata && song.romanizedArtist ? song.romanizedArtist : song.artist;
 
               return (
                 <View key={`${song.sourceId}:${song.id}`} style={styles.reviewModalItem}>
@@ -72,7 +66,7 @@ export const ReviewSelectionModal = ({
                     hitSlop={12}
                     style={styles.reviewModalItemRemove}
                   >
-                    <MaterialCommunityIcons name="close" size={20} color="#ff6b6b" />
+                    <MaterialCommunityIcons name='close' size={20} color='#ff6b6b' />
                   </TouchableOpacity>
                 </View>
               );
@@ -90,7 +84,7 @@ export const ReviewSelectionModal = ({
               style={styles.reviewModalDownloadButton}
               onPress={onDownload}
             >
-              <MaterialCommunityIcons name="download" size={20} color="#fff" />
+              <MaterialCommunityIcons name='download' size={20} color='#fff' />
               <Text style={styles.reviewModalDownloadButtonText}>Download</Text>
             </TouchableOpacity>
           </View>

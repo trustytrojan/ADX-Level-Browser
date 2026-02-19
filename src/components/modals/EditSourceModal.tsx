@@ -1,5 +1,5 @@
-import { Pressable, Text, View, TextInput, ActivityIndicator, Alert } from 'react-native';
-import { useState, useEffect } from 'react';
+import { ActivityIndicator, Alert, Pressable, Text, TextInput, View } from 'react-native';
+import { useEffect, useState } from 'react';
 import { styles } from '../../styles/AppStyles';
 import { updateSource } from '../../services/sources';
 import type { Source } from '../../types';
@@ -31,7 +31,8 @@ export const EditSourceModal = ({ visible, source, onClose, onSourceUpdated }: E
       return;
     }
 
-    if (!source) return;
+    if (!source)
+      return;
 
     setUpdating(true);
     try {
@@ -39,7 +40,7 @@ export const EditSourceModal = ({ visible, source, onClose, onSourceUpdated }: E
         name: sourceName.trim(),
         baseUrl: sourceUrl.trim(),
       });
-      
+
       onSourceUpdated();
       onClose();
     } catch (error) {
@@ -58,22 +59,23 @@ export const EditSourceModal = ({ visible, source, onClose, onSourceUpdated }: E
     onClose();
   };
 
-  if (!source) return null;
+  if (!source)
+    return null;
 
   return (
     <MyModal
       visible={visible}
-      animationType="none"
+      animationType='none'
       transparent={true}
       onRequestClose={handleClose}
     >
       <View style={styles.helpModalOverlay}>
-        <View 
+        <View
           style={styles.helpModalContent}
           onStartShouldSetResponder={() => true}
         >
           <Text style={styles.helpModalTitle}>Edit Source</Text>
-          
+
           <View style={{ marginBottom: 24 }}>
             <Text style={{ color: '#9aa3b2', fontSize: 14, marginBottom: 8 }}>Source Name</Text>
             <TextInput
@@ -85,11 +87,11 @@ export const EditSourceModal = ({ visible, source, onClose, onSourceUpdated }: E
                 fontSize: 14,
                 marginBottom: 16,
               }}
-              placeholder="e.g., My Custom Source"
-              placeholderTextColor="#9aa3b2"
+              placeholder='e.g., My Custom Source'
+              placeholderTextColor='#9aa3b2'
               value={sourceName}
               onChangeText={setSourceName}
-              autoCapitalize="words"
+              autoCapitalize='words'
             />
 
             <Text style={{ color: '#9aa3b2', fontSize: 14, marginBottom: 8 }}>Base URL</Text>
@@ -101,13 +103,13 @@ export const EditSourceModal = ({ visible, source, onClose, onSourceUpdated }: E
                 borderRadius: 8,
                 fontSize: 14,
               }}
-              placeholder="https://example.com/api"
-              placeholderTextColor="#9aa3b2"
+              placeholder='https://example.com/api'
+              placeholderTextColor='#9aa3b2'
               value={sourceUrl}
               onChangeText={setSourceUrl}
-              autoCapitalize="none"
+              autoCapitalize='none'
               autoCorrect={false}
-              keyboardType="url"
+              keyboardType='url'
             />
           </View>
 
@@ -121,11 +123,9 @@ export const EditSourceModal = ({ visible, source, onClose, onSourceUpdated }: E
               onPress={handleUpdate}
               disabled={updating}
             >
-              {updating ? (
-                <ActivityIndicator size="small" color="#fff" />
-              ) : (
-                <Text style={styles.helpModalCloseButtonText}>Update Source</Text>
-              )}
+              {updating
+                ? <ActivityIndicator size='small' color='#fff' />
+                : <Text style={styles.helpModalCloseButtonText}>Update Source</Text>}
             </Pressable>
 
             <Pressable

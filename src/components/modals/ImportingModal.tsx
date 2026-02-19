@@ -1,4 +1,4 @@
-import { Text, View, ActivityIndicator } from 'react-native';
+import { ActivityIndicator, Text, View } from 'react-native';
 import { styles } from '../../styles/AppStyles';
 import MyModal from './MyModal';
 
@@ -12,11 +12,11 @@ export const ImportingModal = ({
   songCount,
 }: ImportingModalProps) => {
   const isMultiple = songCount > 1;
-  
+
   return (
     <MyModal
       visible={visible}
-      animationType="none"
+      animationType='none'
       transparent={true}
       // onRequestClose={() => {
       //   // User cannot close this modal while importing
@@ -33,11 +33,9 @@ export const ImportingModal = ({
 
           <View style={styles.downloadingModalLoadingContainer}>
             <Text style={{ color: '#9aa3b2', fontSize: 14, marginBottom: 16, textAlign: 'center' }}>
-              {isMultiple 
-                ? `Preparing ${songCount} levels for bulk import...`
-                : 'Preparing level for import...'}
+              {isMultiple ? `Preparing ${songCount} levels for bulk import...` : 'Preparing level for import...'}
             </Text>
-            <ActivityIndicator size="large" color="#007AFF" />
+            <ActivityIndicator size='large' color='#007AFF' />
           </View>
         </View>
       </View>
