@@ -5,6 +5,10 @@ on:
     workflows: [Build]
     types: [completed]
 
+permissions:
+  issues: write
+  actions: read
+
 jobs:
   pr_comment:
     if: github.event.workflow_run.event == 'pull_request' && github.event.workflow_run.conclusion == 'success'
