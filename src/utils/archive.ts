@@ -1,4 +1,5 @@
-import { Directory, File } from 'expo-file-system';
+import { Directory, File, Paths } from 'expo-file-system';
+import { Platform } from 'react-native';
 
 /*
 Unfortunately, on Expo Go on iOS, this will "throw" an error at the user,
@@ -67,8 +68,40 @@ export const zipFoldersToFile = async (folders: Directory[], outputFile: File): 
 
   if (zipArchiveModule?.zip) {
     try {
-      const folderPaths = folders.map((folder) => folder.uri);
-      await zipArchiveModule.zip(folderPaths, outputFile.uri);
+      if (Platform.OS === 'ios') {
+        const originalUris = folders.map(f => f.uri);
+
+        // move the folders into a temp dir for zipping,
+        // to trigger https://github.com/mockingbot/react-native-zip-archive/blob/e6b5f63876563b825b942fd38003606dfc3f823a/index.js#L60-L63
+        // instead of https://github.com/mockingbot/react-native-zip-archive/blob/e6b5f63876563b825b942fd38003606dfc3f823a/index.js#L56-L59
+        // to avoid https://github.com/ZipArchive/ZipArchive/blob/acc61be58181e635ae77718e66530b4ee7dea4be/SSZipArchive/SSZipArchive.m#L868-L870
+        // and instead make use of https://github.com/ZipArchive/ZipArchive/blob/acc61be58181e635ae77718e66530b4ee7dea4be/SSZipArchive/SSZipArchive.m#L917
+        // awesome 😃
+        const tempDir = new Directory(Paths.cache, 'temp_dir_for_zipping');
+        for (const dir of folders) {
+          dir.move(new Directory(tempDir, dir.name));
+        }
+
+        await zipArchiveModule.zip(tempDir.uri, outputFile.uri);
+
+        // move the folders back to their original locations!
+        for (let i = 0; i < originalUris.length; ++i) {
+          folders[i].move(new Directory(originalUris[i]));
+        }
+      } else if (Platform.OS === 'android') {
+        // both RNZA and zip4j ensure that folder paths are recursed.
+        // no need to worry about it, unlike above.
+        const folderPaths = folders.map((folder) => folder.uri);
+        await zipArchiveModule.zip(folderPaths, outputFile.uri);
+      } else {
+        throw new Error('Unsupported platform');
+      }
+
+      /*
+      yes, if you're wondering, i reported this inconsistency to RNZA:
+      https://github.com/mockingbot/react-native-zip-archive/issues/339
+      */
+
       return;
     } catch {
       // Fall through to fflate fallback
