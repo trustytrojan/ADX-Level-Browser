@@ -60,26 +60,30 @@ export const DownloadingContainer = ({
 
         {hasJobs && (
           <ScrollView style={styles.downloadingModalList}>
-            {downloadJobs.map((job) => {
-              const isCompleted = job.status === 'COMPLETED';
-              const isInProgress = job.status === 'IN_PROGRESS';
+            {downloadJobs
+              // display the currently downloading songs first
+              .sort(job => job.status === 'IN_PROGRESS' ? -1 : 0)
+              .map((job) => {
+                const isCompleted = job.status === 'COMPLETED';
+                const isInProgress = job.status === 'IN_PROGRESS';
 
-              const leftIcon = isCompleted
-                ? <MaterialCommunityIcons name='check-circle' size={20} color='#4caf50' />
-                : isInProgress
-                ? <ActivityIndicator size='small' color='#007AFF' />
-                : <MaterialCommunityIcons name='clock-outline' size={20} color='#9aa3b2' />;
+                const leftIcon = isCompleted
+                  ? <MaterialCommunityIcons name='check-circle' size={20} color='#4caf50' />
+                  : isInProgress
+                  ? <ActivityIndicator size='small' color='#007AFF' />
+                  : <MaterialCommunityIcons name='clock-outline' size={20} color='#9aa3b2' />;
 
-              return (
-                <ModalSongElement
-                  key={job.id}
-                  title={job.title}
-                  subtitle={job.artist}
-                  leftIcon={leftIcon}
-                  variant='downloading'
-                />
-              );
-            })}
+                return (
+                  <ModalSongElement
+                    key={job.id}
+                    title={job.title}
+                    subtitle={job.artist}
+                    leftIcon={leftIcon}
+                    variant='downloading'
+                  />
+                );
+              })
+            }
           </ScrollView>
         )}
 

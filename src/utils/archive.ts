@@ -1,22 +1,12 @@
 import { Directory, File, Paths } from 'expo-file-system';
 import { Platform } from 'react-native';
+import Constants, { ExecutionEnvironment } from 'expo-constants';
 
-/*
-Unfortunately, on Expo Go on iOS, this will "throw" an error at the user,
-but not in the code. Just tell users to ignore this specifc error about
-"native modules not loading in Expo Go". Luckily, it only appears once:
-the next time you perform a(n) (un)zip-requiring action, the visual error
-does not appear again.
-*/
-const loadZipArchiveModule = async () => {
-  try {
-    const module = await import('react-native-zip-archive');
-    if (!module)
-      return undefined;
-    return module;
-  } catch {
+const loadZipArchiveModule = () => {
+  if (Constants.executionEnvironment === ExecutionEnvironment.StoreClient)
+    // we are definitely running in Expo Go, and cannot load native modules
     return undefined;
-  }
+  return import('react-native-zip-archive');
 };
 
 const collectFolderFiles = async (folderUri: string): Promise<Record<string, Uint8Array>> => {
@@ -84,7 +74,7 @@ export const zipFoldersToFile = async (folders: Directory[], outputFile: File): 
 
         await zipArchiveModule.zip(tempDir.uri, outputFile.uri);
 
-        // move the folders back to their original locations!
+        // move the folders back to their original locations
         for (let i = 0; i < originalUris.length; ++i) {
           folders[i].move(new Directory(originalUris[i]));
         }
