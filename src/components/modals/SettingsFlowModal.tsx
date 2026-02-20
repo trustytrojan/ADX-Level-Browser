@@ -132,7 +132,7 @@ export const SettingsFlowModal = ({
       transparent={true}
       onRequestClose={onClose}
     >
-      <TouchableOpacity style={styles.helpModalOverlay}>
+      <View style={styles.helpModalOverlay}>
         <View style={styles.helpModalContent}>
           {mode === 'settings' && (
             <ScrollView showsVerticalScrollIndicator={false}>
@@ -276,7 +276,7 @@ export const SettingsFlowModal = ({
             </>
           )}
         </View>
-      </TouchableOpacity>
+      </View>
     </Modal>
   );
 };
