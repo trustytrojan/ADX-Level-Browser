@@ -362,7 +362,6 @@ export const styles = StyleSheet.create({
     paddingHorizontal: 20,
     borderRadius: 6,
     alignItems: 'center',
-    marginTop: 16,
   },
   downloadingModalCompleteButtonText: {
     color: '#fff',
@@ -456,7 +455,7 @@ export const styles = StyleSheet.create({
     padding: 4,
   },
   reviewModalButtons: {
-    gap: 12,
+    gap: 8,
   },
   reviewModalClearButton: {
     paddingVertical: 12,
@@ -494,5 +493,27 @@ export const styles = StyleSheet.create({
     color: '#fff',
     fontSize: 16,
     fontWeight: '600',
+  },
+  importingModalButtons: {
+    gap: 8,
+    alignSelf: 'stretch',
+    marginTop: 16,
+  },
+  importingModalImportButton: {
+    backgroundColor: '#4caf50',
+    paddingVertical: 12,
+    paddingHorizontal: 20,
+    borderRadius: 6,
+    alignItems: 'center',
+    justifyContent: 'center',
+    flexDirection: 'row',
+  },
+  importingModalCloseButton: {
+    backgroundColor: '#007AFF',
+    paddingVertical: 12,
+    paddingHorizontal: 20,
+    borderRadius: 6,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
 });

@@ -8,7 +8,6 @@ import { HelpModal } from './components/modals/HelpModal';
 import { SettingsFlowModal } from './components/modals/SettingsFlowModal';
 import { ImportFlowModal } from './components/modals/ImportFlowModal';
 import { useDownloadFlow } from './hooks/useDownloadFlow';
-import { resetIntentLock } from './utils/sharing';
 import { styles } from './styles/AppStyles';
 import {
   getEnabledSourceCount,
@@ -164,26 +163,15 @@ export default function App() {
     showDownloadingModal,
     showImportingModal,
     importingSongCount,
+    isImportCompressionComplete,
+    retryImporting,
+    dismissImporting,
     showCloseOnComplete,
     downloadCompletionVersion,
     startDownloadFlow,
     startDownloadOnlyFlow,
     dismissDownloading,
   } = useDownloadFlow(settings.downloadVideos);
-
-  // App state tracking
-  useEffect(() => {
-    const subscription = AppState.addEventListener('change', (nextAppState) => {
-      if (nextAppState === 'active') {
-        // Reset intent lock when app comes to foreground
-        resetIntentLock();
-      }
-    });
-
-    return () => {
-      subscription.remove();
-    };
-  }, []);
 
   const handleItemPress = useCallback((item: SongItem) => {
     const songId = item.id || '';
@@ -367,6 +355,9 @@ export default function App() {
         showCloseOnComplete={showCloseOnComplete}
         onDismissDownloading={dismissDownloading}
         importingSongCount={importingSongCount}
+        importCompressionComplete={isImportCompressionComplete}
+        onRetryImporting={retryImporting}
+        onCloseImporting={dismissImporting}
       />
 
       <StatusBar style='light' />

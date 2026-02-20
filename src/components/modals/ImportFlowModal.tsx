@@ -20,6 +20,9 @@ interface ImportFlowModalProps {
   showCloseOnComplete?: boolean;
   onDismissDownloading?: () => void;
   importingSongCount: number;
+  importCompressionComplete: boolean;
+  onRetryImporting: () => void;
+  onCloseImporting: () => void;
 }
 
 export const ImportFlowModal = ({
@@ -38,6 +41,9 @@ export const ImportFlowModal = ({
   showCloseOnComplete = false,
   onDismissDownloading,
   importingSongCount,
+  importCompressionComplete,
+  onRetryImporting,
+  onCloseImporting,
 }: ImportFlowModalProps) => {
   const mode = importingVisible
     ? 'importing'
@@ -90,7 +96,12 @@ export const ImportFlowModal = ({
       )}
 
       {mode === 'importing' && (
-        <ImportingContainer songCount={importingSongCount} />
+        <ImportingContainer
+          songCount={importingSongCount}
+          compressionComplete={importCompressionComplete}
+          onImport={onRetryImporting}
+          onClose={onCloseImporting}
+        />
       )}
     </Modal>
   );

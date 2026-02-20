@@ -1,4 +1,4 @@
-import { Modal, Pressable, Text, TouchableOpacity, View, Button } from 'react-native';
+import { Modal, Text, TouchableOpacity, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { styles } from '../../styles/AppStyles';
 

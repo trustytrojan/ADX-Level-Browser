@@ -19,6 +19,11 @@ type StartDownloadsResult = {
   totalCount: number;
 };
 
+type ImportReadyTarget = {
+  fileUri: string;
+  title: string;
+};
+
 // Create a simple store for download jobs
 const createStore = <T>(initialValue: T) => {
   let state = initialValue;
@@ -167,7 +172,20 @@ export const useDownload = (downloadVideos: boolean = true) => {
     return getCompletedItems().length;
   };
 
-  const importCompletedDownloads = async (): Promise<number> => {
+  const waitForCompletedStateRender = async () => {
+    if (Platform.OS !== 'android')
+      return;
+
+    // wait a bit for ImportingContainer to transition to its completed state
+
+    await new Promise<void>((resolve) => {
+      setTimeout(resolve, 50);
+    });
+  };
+
+  const importCompletedDownloads = async (
+    onCompressionComplete?: (target: ImportReadyTarget) => void,
+  ): Promise<number> => {
     const completedItems = getCompletedItems();
 
     if (completedItems.length === 0)
@@ -181,7 +199,9 @@ export const useDownload = (downloadVideos: boolean = true) => {
       if (!adxFile.exists && folder.exists)
         await zipSongFolder(folder, adxFile);
 
-      await openWithAstroDX(adxFile, item.title);
+      onCompressionComplete?.({ fileUri: adxFile.uri, title: item.title });
+      await waitForCompletedStateRender();
+      await openWithAstroDX(adxFile);
       return 1;
     }
 
@@ -232,7 +252,9 @@ export const useDownload = (downloadVideos: boolean = true) => {
       combinedAdxFile.write(zipped);
     }
 
-    await openWithAstroDX(combinedAdxFile, 'Combined Songs');
+    onCompressionComplete?.({ fileUri: combinedAdxFile.uri, title: 'Combined Songs' });
+    await waitForCompletedStateRender();
+    await openWithAstroDX(combinedAdxFile);
     return completedItems.length;
   };
 

@@ -1,6 +1,8 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { File } from 'expo-file-system';
 import type { SongItem } from '../types';
 import { useDownload } from './useDownload';
+import { openWithAstroDX } from '../utils/sharing';
 
 export const useDownloadFlow = (downloadVideos: boolean) => {
   const {
@@ -15,11 +17,13 @@ export const useDownloadFlow = (downloadVideos: boolean) => {
   const [showDownloadingModal, setShowDownloadingModal] = useState(false);
   const [showImportingModal, setShowImportingModal] = useState(false);
   const [importingSongCount, setImportingSongCount] = useState(0);
+  const [isImportCompressionComplete, setIsImportCompressionComplete] = useState(false);
   const [showCloseOnComplete, setShowCloseOnComplete] = useState(false);
   const [downloadCompletionVersion, setDownloadCompletionVersion] = useState(0);
 
   const isImportingRef = useRef(false);
   const didMarkCompletionRef = useRef(false);
+  const importReadyTargetRef = useRef<{ fileUri: string; title: string } | null>(null);
 
   const runImport = useCallback(async (countHint?: number) => {
     if (isImportingRef.current)
@@ -37,14 +41,27 @@ export const useDownloadFlow = (downloadVideos: boolean) => {
     setShowDownloadingModal(false);
     setShowCloseOnComplete(false);
     setImportingSongCount(completedCount);
+    setIsImportCompressionComplete(false);
+    importReadyTargetRef.current = null;
     setShowImportingModal(true);
 
+    let importSucceeded = false;
+
     try {
-      await importCompletedDownloads();
+      await importCompletedDownloads((target) => {
+        importReadyTargetRef.current = target;
+        setIsImportCompressionComplete(true);
+      });
+      importSucceeded = true;
     } catch (error) {
       console.error('Error processing downloads:', error);
     } finally {
-      setShowImportingModal(false);
+      if (!importSucceeded) {
+        setShowImportingModal(false);
+        setIsImportCompressionComplete(false);
+        importReadyTargetRef.current = null;
+      }
+
       clearDownloads();
       isImportingRef.current = false;
     }
@@ -96,12 +113,30 @@ export const useDownloadFlow = (downloadVideos: boolean) => {
     }, 0);
   }, [clearDownloads]);
 
+  const retryImporting = useCallback(async () => {
+    const target = importReadyTargetRef.current;
+    if (!target)
+      return;
+
+    await openWithAstroDX(new File(target.fileUri));
+  }, []);
+
+  const dismissImporting = useCallback(() => {
+    setShowImportingModal(false);
+    setIsImportCompressionComplete(false);
+    setImportingSongCount(0);
+    importReadyTargetRef.current = null;
+  }, []);
+
   return {
     downloadJobs,
     hasErrors,
     showDownloadingModal,
     showImportingModal,
     importingSongCount,
+    isImportCompressionComplete,
+    retryImporting,
+    dismissImporting,
     showCloseOnComplete,
     downloadCompletionVersion,
     startDownloadFlow,
