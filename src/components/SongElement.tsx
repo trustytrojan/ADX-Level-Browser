@@ -1,16 +1,16 @@
-import { Text, View, TouchableOpacity, ActivityIndicator } from 'react-native';
+import { ActivityIndicator, Text, TouchableOpacity, View } from 'react-native';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { memo } from 'react';
-import type { SongItem, DownloadJobItem } from '../types';
-import { styles } from '../styles/AppStyles';
+import type { DownloadJobItem, SongItem } from '../types';
+import { styles } from '../styles';
 
 type ElementItem = SongItem | DownloadJobItem;
 
-interface SongElementProps {
-  item: ElementItem;
+interface SongElementProps<T extends ElementItem = ElementItem> {
+  item: T;
   downloaded?: boolean; // For SongItem
   isSelected?: boolean;
-  onPress?: (item: ElementItem) => void;
+  onPress?: (item: T) => void;
   useRomanizedMetadata?: boolean;
 }
 
@@ -22,13 +22,13 @@ const isDownloadJobItem = (item: ElementItem): item is DownloadJobItem => {
   return 'status' in item && typeof (item as DownloadJobItem).status === 'string';
 };
 
-export const SongElement = memo(({
+export const SongElement = memo(<T extends ElementItem = ElementItem>({
   item,
   downloaded = false,
   isSelected = false,
   onPress,
   useRomanizedMetadata = false,
-}: SongElementProps) => {
+}: SongElementProps<T>) => {
   const isSong = isSongItem(item);
   const isJob = isDownloadJobItem(item);
 
@@ -45,32 +45,22 @@ export const SongElement = memo(({
   }
 
   // Get display text with romanization preference
-  const displayTitle =
-    useRomanizedMetadata && isSong && item.romanizedTitle
-      ? item.romanizedTitle
-      : item.title;
-  const displayArtist =
-    useRomanizedMetadata && isSong && item.romanizedArtist
-      ? item.romanizedArtist
-      : item.artist;
-  const displayDesigner =
-    useRomanizedMetadata && romanizedDesigner ? romanizedDesigner : designer;
+  const displayTitle = useRomanizedMetadata && isSong && item.romanizedTitle ? item.romanizedTitle : item.title;
+  const displayArtist = useRomanizedMetadata && isSong && item.romanizedArtist ? item.romanizedArtist : item.artist;
+  const displayDesigner = useRomanizedMetadata && romanizedDesigner ? romanizedDesigner : designer;
 
   // Determine right-side icon
   let rightIcon: React.ReactNode = null;
 
   if (isJob) {
     // For DownloadJobItem, show status icon
-    if (item.status === 'COMPLETED') {
-      rightIcon = <Ionicons name="checkmark-circle" size={20} color="#4caf50" />;
-    } else {
-      rightIcon = (
-        <ActivityIndicator size="small" color="#007AFF" style={styles.downloadIndicator} />
-      );
-    }
+    if (item.status === 'COMPLETED')
+      rightIcon = <Ionicons name='checkmark-circle' size={20} color='#4caf50' />;
+    else
+      rightIcon = <ActivityIndicator size='small' color='#007AFF' style={styles.downloadIndicator} />;
   } else if (downloaded) {
     // For SongItem that's already downloaded
-    rightIcon = <Ionicons name="checkmark-circle" size={20} color="#4caf50" />;
+    rightIcon = <Ionicons name='checkmark-circle' size={20} color='#4caf50' />;
   }
 
   // Check if song has a designer (for styling purposes)
@@ -99,4 +89,4 @@ export const SongElement = memo(({
       </View>
     </TouchableOpacity>
   );
-});
+}) as <T extends ElementItem = ElementItem>(props: SongElementProps<T>) => React.ReactElement;

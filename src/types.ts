@@ -60,12 +60,8 @@ export interface Song {
   romanizedDesigner?: string;
 }
 
-// Type alias for backwards compatibility with components
+// Type alias used throughout the codebase
 export type SongItem = Song;
-
-export interface DownloadState {
-  [key: string]: boolean;
-}
 
 export interface DownloadJobItem {
   id: string; // Unique song ID
@@ -76,11 +72,6 @@ export interface DownloadJobItem {
   romanizedDesigner?: string;
   status: 'QUEUED' | 'IN_PROGRESS' | 'COMPLETED';
   percentDone?: number;
-}
-
-export interface SelectionState {
-  isSelectionMode: boolean;
-  selectedIds: Set<string>;
 }
 
 export interface AppSettings {

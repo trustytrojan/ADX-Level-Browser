@@ -1,40 +1,38 @@
 import * as FileSystem from 'expo-file-system/legacy';
-import { File, Directory, Paths } from 'expo-file-system';
-import { Platform } from 'react-native';
+import { Directory, File, Paths } from 'expo-file-system';
 import type { Song } from '../types';
-import { getSource, getTrackUrl, getImageUrl, getChartUrl, getVideoUrl } from './sources';
+import { unzipFileToFolder, zipFolderToFile } from '../utils/archive';
+import { getChartUrl, getImageUrl, getSource, getTrackUrl, getVideoUrl } from './sources';
 
-const sanitizeFilename = (s: string) => s.replace(/[^a-z0-9._-]/gi, '-');
+// This is all we need to do for a POSIX filesystem.
+const sanitizeFilename = (s: string) => s.replaceAll('/', '_');
 
 /**
- * Download a song from any source and create a zipped .adx file
- * 
+ * Download a song from any source to an uncompressed folder
+ *
  * @param song - The song to download
- * @param outputFile - The file to save the .adx to
+ * @param outputFolder - The directory to save the song files to
  * @param downloadVideo - Whether to download the video file
  */
 export const downloadSong = async (
   song: Song,
-  outputFile: File,
-  downloadVideo: boolean = true
+  outputFolder: Directory,
+  downloadVideo: boolean = true,
 ): Promise<void> => {
   // Get the source for this song
   const source = await getSource(song.sourceId);
-  
-  if (!source) {
+
+  if (!source)
     throw new Error(`Source "${song.sourceId}" not found`);
-  }
 
-  // Create a temporary directory for storing the downloaded files
-  const tempDir = new Directory(Paths.document, `temp_${song.sourceId}_${song.id}`);
-  tempDir.create({ intermediates: true, idempotent: true });
+  // This avoids the problem caused by bulk importing two levels with the same song title.
+  const songDirName = sanitizeFilename(`${song.title}-${song.id}`);
 
-  const songDirName = sanitizeFilename(song.title);
+  // Create the song directory inside the output folder
+  const songDir = new Directory(outputFolder, songDirName);
+  songDir.create({ intermediates: true, idempotent: true });
 
   try {
-    // Create song directory inside temp directory
-    FileSystem.makeDirectoryAsync(`${tempDir.uri}/${songDirName}`);
-
     // Build URLs for all resources
     const trackUrl = getTrackUrl(source, song.id);
     const chartUrl = getChartUrl(source, song.id);
@@ -42,10 +40,10 @@ export const downloadSong = async (
     const videoUrl = getVideoUrl(source, song.id);
 
     // Define file paths
-    const trackPath = `${tempDir.uri}/${songDirName}/track.mp3`;
-    const chartPath = `${tempDir.uri}/${songDirName}/maidata.txt`;
-    const imagePath = `${tempDir.uri}/${songDirName}/bg.png`;
-    const videoPath = `${tempDir.uri}/${songDirName}/pv.mp4`;
+    const trackPath = `${songDir.uri}/track.mp3`;
+    const chartPath = `${songDir.uri}/maidata.txt`;
+    const imagePath = `${songDir.uri}/bg.png`;
+    const videoPath = `${songDir.uri}/pv.mp4`;
 
     // Download files in parallel
     const downloadPromises: Promise<any>[] = [
@@ -59,7 +57,7 @@ export const downloadSong = async (
     // Only download video if enabled
     if (downloadVideo) {
       const videoPromise = fetch(videoUrl)
-        .then(resp => {
+        .then((resp) => {
           if (resp.status === 404)
             return videoFile.exists && videoFile.delete();
           if (!resp.ok)
@@ -68,53 +66,55 @@ export const downloadSong = async (
             throw new Error(`[downloadSong] [${videoUrl}] Content-Type is not video/mp4`);
           if (resp.bodyUsed)
             throw new Error(`[downloadSong] [${videoUrl}] resp.bodyUsed`);
-          return resp.arrayBuffer().then(buf => videoFile.write(new Uint8Array(buf)));
+          return resp.arrayBuffer().then((buf) => videoFile.write(new Uint8Array(buf)));
         });
       downloadPromises.push(videoPromise);
     }
 
     await Promise.all(downloadPromises);
-
-    // Get the output file URI
-    const outputFileUri = `${Paths.document.uri}adx-downloads/${outputFile.name}`;
-
-    // Create zip archive
-    if (Platform.OS === 'android') {
-      const { zip } = await import('react-native-zip-archive');
-      await zip(tempDir.uri, outputFileUri);
-    } else if (Platform.OS === 'ios') {
-      const fflate = await import('fflate');
-
-      const videoFile = new File(videoPath);
-      
-      const filesToZip: Record<string, Uint8Array> = {
-        [`${songDirName}/track.mp3`]: new File(trackPath).bytesSync(),
-        [`${songDirName}/maidata.txt`]: new File(chartPath).bytesSync(),
-        [`${songDirName}/bg.png`]: new File(imagePath).bytesSync(),
-      };
-
-      // Only include video if it was downloaded and exists
-      if (downloadVideo && videoFile.exists) {
-        filesToZip[`${songDirName}/pv.mp4`] = videoFile.bytesSync();
-      }
-
-      const zipped = fflate.zipSync(filesToZip);
-      new File(outputFileUri).write(zipped);
-    }
-
-    // Clean up temp directory
-    try {
-      tempDir.delete();
-    } catch (error) {
-      console.warn('Failed to clean up temp directory:', error);
-    }
   } catch (error) {
     // Clean up on error
     try {
-      tempDir.delete();
+      songDir.delete();
     } catch {
       // Ignore cleanup errors
     }
+    throw error;
+  }
+};
+
+/**
+ * Zip a song folder into an .adx file
+ *
+ * @param songFolder - The directory containing the song files
+ * @param outputFile - The .adx file to create
+ */
+export const zipSongFolder = async (
+  songFolder: Directory,
+  outputFile: File,
+): Promise<void> => {
+  try {
+    await zipFolderToFile(songFolder, outputFile);
+  } catch (error) {
+    console.error('Error zipping song folder:', error);
+    throw error;
+  }
+};
+
+/**
+ * Unzip an .adx file into a song folder
+ *
+ * @param adxFile - The .adx file to extract
+ * @param outputFolder - The directory to extract the song files to
+ */
+export const unzipAdxFile = async (
+  adxFile: File,
+  outputFolder: Directory,
+): Promise<void> => {
+  try {
+    await unzipFileToFolder(adxFile, outputFolder);
+  } catch (error) {
+    console.error('Error unzipping ADX file:', error);
     throw error;
   }
 };

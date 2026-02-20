@@ -1,9 +1,9 @@
-import { Text, FlatList, RefreshControl, ActivityIndicator, View } from 'react-native';
-import { useRef, useCallback, useState, useEffect } from 'react';
+import { ActivityIndicator, FlatList, RefreshControl, Text, View } from 'react-native';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import type { SongItem } from '../types';
-import { SongListItem } from './SongListItem';
-import { getFileForSong } from '../utils/fileSystem';
-import { styles } from '../styles/AppStyles';
+import { SongElement } from './SongElement';
+import { getFileForSong, getFolderForSong } from '../utils/fileSystem';
+import { styles } from '../styles';
 
 interface SongListProps {
   songs: SongItem[];
@@ -17,6 +17,7 @@ interface SongListProps {
   refreshing: boolean;
   onRefresh: () => void;
   useRomanizedMetadata: boolean;
+  downloadedStateVersion?: number;
 }
 
 export const SongList = ({
@@ -31,8 +32,24 @@ export const SongList = ({
   refreshing,
   onRefresh,
   useRomanizedMetadata,
+  downloadedStateVersion = 0,
 }: SongListProps) => {
   const [downloadedIds, setDownloadedIds] = useState<Set<string>>(new Set());
+  const listRef = useRef<FlatList<SongItem>>(null);
+  const wasRefreshingRef = useRef(false);
+
+  // Re-check downloaded status when cache/download state changes
+  useEffect(() => {
+    const next = new Set<string>();
+    songs.forEach((song) => {
+      const songId = song.id || '';
+      const file = getFileForSong(song);
+      const folder = getFolderForSong(song);
+      if (file.exists || folder.exists)
+        next.add(songId);
+    });
+    setDownloadedIds(next);
+  }, [downloadedStateVersion, songs]);
 
   const viewableItemsChanged = useRef(({ viewableItems }: { viewableItems: Array<{ item: SongItem }> }) => {
     setDownloadedIds((prev) => {
@@ -42,7 +59,8 @@ export const SongList = ({
         const songId = item.id || '';
         if (!prev.has(songId)) {
           const file = getFileForSong(item);
-          if (file.exists) {
+          const folder = getFolderForSong(item);
+          if (file.exists || folder.exists) {
             next.add(songId);
             updated = true;
           }
@@ -54,18 +72,31 @@ export const SongList = ({
 
   const viewabilityConfig = useRef({ itemVisiblePercentThreshold: 60 }).current;
 
+  useEffect(() => {
+    if (refreshing) {
+      wasRefreshingRef.current = true;
+      listRef.current?.scrollToOffset({ offset: 0, animated: false });
+      return;
+    }
+
+    if (wasRefreshingRef.current) {
+      listRef.current?.scrollToOffset({ offset: 0, animated: false });
+      wasRefreshingRef.current = false;
+    }
+  }, [refreshing, songs.length]);
+
   const handleEndReached = () => {
     // Only load more if there are actually more pages available
-    if (!loading && !loadingMore && hasMore && songs.length > 0) {
+    if (!loading && !loadingMore && hasMore && songs.length > 0)
       onLoadMore();
-    }
   };
 
   const renderFooter = useCallback(() => {
-    if (!loadingMore) return null;
+    if (!loadingMore)
+      return null;
     return (
       <View style={{ padding: 16, alignItems: 'center' }}>
-        <ActivityIndicator size="small" color="#007AFF" />
+        <ActivityIndicator size='small' color='#007AFF' />
       </View>
     );
   }, [loadingMore]);
@@ -74,45 +105,44 @@ export const SongList = ({
     ({ item }: { item: SongItem }) => {
       const songId = item.id || '';
       return (
-        <SongListItem
+        <SongElement
           item={item}
           downloaded={downloadedIds.has(songId)}
-          isInQueue={isInQueue(songId)}
-          onPress={onSongPress}
+          isSelected={isInQueue(songId)}
+          onPress={refreshing ? () => {} : onSongPress}
           useRomanizedMetadata={useRomanizedMetadata}
         />
       );
     },
-    [downloadedIds, isInQueue, onSongPress, useRomanizedMetadata]
+    [downloadedIds, isInQueue, onSongPress, refreshing, useRomanizedMetadata],
   );
 
   return (
     <>
-      <Text style={styles.sectionLabel}>Song List</Text>
+      {/* <Text style={styles.sectionLabel}>Song List</Text> */}
       <FlatList
+        ref={listRef}
         style={styles.songsList}
         data={songs}
         keyExtractor={(item) => `${item.sourceId}:${item.id}`}
         renderItem={renderItem}
-        ListEmptyComponent={
-          !loading && searchText ? (
-            <Text style={styles.emptyText}>No songs found</Text>
-          ) : null
-        }
+        ListEmptyComponent={!loading && searchText ? <Text style={styles.emptyText}>No songs found</Text> : null}
         ListFooterComponent={renderFooter}
         onViewableItemsChanged={viewableItemsChanged.current}
         viewabilityConfig={viewabilityConfig}
         onEndReached={handleEndReached}
         onEndReachedThreshold={0.3}
-        maintainVisibleContentPosition={{
-          minIndexForVisible: 0,
+        onContentSizeChange={() => {
+          if (refreshing || wasRefreshingRef.current)
+            listRef.current?.scrollToOffset({ offset: 0, animated: false });
         }}
+        scrollEnabled={!refreshing}
         removeClippedSubviews={false}
         refreshControl={
           <RefreshControl
             refreshing={refreshing}
             onRefresh={onRefresh}
-            tintColor="#007AFF"
+            tintColor='#007AFF'
             colors={['#007AFF']}
           />
         }

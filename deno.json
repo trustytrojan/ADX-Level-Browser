@@ -1,0 +1,20 @@
+{
+	"fmt": {
+		"useTabs": false,
+		"trailingCommas": "onlyMultiLine",
+		"lineWidth": 120,
+		"indentWidth": 2,
+		"semiColons": true,
+		"singleQuote": true,
+		"proseWrap": "preserve",
+		"include": [
+			"src/**/*.ts",
+			"src/**/*.tsx"
+		],
+		"nextControlFlowPosition": "sameLine",
+		"operatorPosition": "nextLine",
+		"singleBodyPosition": "nextLine",
+		"typeLiteral.separatorKind": "semiColon",
+		"useBraces": "preferNone"
+	}
+}

@@ -1,5 +1,5 @@
-import { View, TextInput } from 'react-native';
-import { styles } from '../styles/AppStyles';
+import { TextInput, View } from 'react-native';
+import { styles } from '../styles';
 
 interface SearchBarProps {
   value: string;
@@ -12,12 +12,12 @@ export const SearchBar = ({ value, onChangeText, onSubmitEditing }: SearchBarPro
     <View style={styles.searchContainer}>
       <TextInput
         style={styles.searchBar}
-        placeholder="Search..."
-        placeholderTextColor="#9aa3b2"
+        placeholder='Search...'
+        placeholderTextColor='#9aa3b2'
         value={value}
         onChangeText={onChangeText}
         onSubmitEditing={onSubmitEditing}
-        returnKeyType="search"
+        returnKeyType='search'
       />
     </View>
   );

@@ -1,24 +1,40 @@
-import { useSyncExternalStore, useRef, useCallback } from 'react';
-import { File } from 'expo-file-system';
-import type { SongItem, DownloadJobItem } from '../types';
-import { getFileForSong } from '../utils/fileSystem';
-import { downloadSong } from '../services/download';
+import { useCallback, useRef, useSyncExternalStore } from 'react';
+import { Directory, File, Paths } from 'expo-file-system';
+import { Platform } from 'react-native';
+import type { DownloadJobItem, SongItem } from '../types';
+import { zipFoldersToFile } from '../utils/archive';
+import { getFileForSong, getFolderForSong } from '../utils/fileSystem';
+import { downloadSong, unzipAdxFile, zipSongFolder } from '../services/download';
+import { openWithAstroDX } from '../utils/sharing';
 
-type CompletedFileItem = {
-  file: File;
+type CompletedItem = {
+  file: File | null;
+  folder: Directory | null;
+  title: string;
+  item: SongItem;
+};
+
+type StartDownloadsResult = {
+  hasPendingDownloads: boolean;
+  completedCount: number;
+  totalCount: number;
+};
+
+type ImportReadyTarget = {
+  fileUri: string;
   title: string;
 };
 
 // Create a simple store for download jobs
-const createStore = <T,>(initialValue: T) => {
+const createStore = <T>(initialValue: T) => {
   let state = initialValue;
   const listeners = new Set<() => void>();
-  
+
   return {
     getState: () => state,
     setState: (newState: T | ((prev: T) => T)) => {
       state = typeof newState === 'function' ? (newState as (prev: T) => T)(state) : newState;
-      listeners.forEach(listener => listener());
+      listeners.forEach((listener) => listener());
     },
     subscribe: (listener: () => void) => {
       listeners.add(listener);
@@ -30,28 +46,28 @@ const createStore = <T,>(initialValue: T) => {
 export const useDownload = (downloadVideos: boolean = true) => {
   const downloadJobsStore = useRef(createStore<DownloadJobItem[]>([])).current;
   const hasErrorsStore = useRef(createStore<boolean>(false)).current;
-  
+
   /*
   WE MUST USE useSyncExternalStore INSTEAD OF useState TO AVOID REACT'S AUTOMATIC BATCHING!
-  THIS FORCES A RENDER ON ANY UPDATE TO THESE VALUES!  
+  THIS FORCES A RENDER ON ANY UPDATE TO THESE VALUES!
   */
 
   const downloadJobs = useSyncExternalStore(
     downloadJobsStore.subscribe,
-    downloadJobsStore.getState
+    downloadJobsStore.getState,
   );
-  
+
   const hasErrors = useSyncExternalStore(
     hasErrorsStore.subscribe,
-    hasErrorsStore.getState
+    hasErrorsStore.getState,
   );
-  
+
   const setDownloadJobs = useCallback((
-    updater: DownloadJobItem[] | ((prev: DownloadJobItem[]) => DownloadJobItem[])
+    updater: DownloadJobItem[] | ((prev: DownloadJobItem[]) => DownloadJobItem[]),
   ) => {
     downloadJobsStore.setState(updater);
   }, [downloadJobsStore]);
-  
+
   const setHasErrors = useCallback((value: boolean) => {
     hasErrorsStore.setState(value);
   }, [hasErrorsStore]);
@@ -60,29 +76,27 @@ export const useDownload = (downloadVideos: boolean = true) => {
     return item.id || '';
   };
 
-  const downloadSingleSong = (item: SongItem) => {
+  const isSongCached = (item: SongItem): boolean => {
     const file = getFileForSong(item);
+    const folder = getFolderForSong(item);
+    return file.exists || folder.exists;
+  };
+
+  const downloadSingleSong = (item: SongItem) => {
+    const folder = getFolderForSong(item);
     const songId = getSongId(item);
 
     // Update to IN_PROGRESS immediately
     setDownloadJobs((prev) =>
-      prev.map((entry) =>
-        entry.id === songId
-          ? { ...entry, status: 'IN_PROGRESS' as const, percentDone: 0 }
-          : entry
-      )
+      prev.map((entry) => entry.id === songId ? { ...entry, status: 'IN_PROGRESS' as const, percentDone: 0 } : entry)
     );
 
-    return downloadSong(item, file, downloadVideos).then(() => {
+    return downloadSong(item, folder, downloadVideos).then(() => {
       // Update to COMPLETED
       setDownloadJobs((prev) =>
-        prev.map((entry) =>
-          entry.id === songId
-            ? { ...entry, status: 'COMPLETED' as const, percentDone: 100 }
-            : entry
-        )
+        prev.map((entry) => entry.id === songId ? { ...entry, status: 'COMPLETED' as const, percentDone: 100 } : entry)
       );
-    }).catch(error => {
+    }).catch((error) => {
       console.error('Download error:', error);
       setHasErrors(true);
       // Mark as failed by removing from jobs list
@@ -90,8 +104,9 @@ export const useDownload = (downloadVideos: boolean = true) => {
     });
   };
 
-  const startDownloads = async (items: SongItem[]) => {
-    if (items.length === 0) return;
+  const startDownloads = (items: SongItem[]): StartDownloadsResult => {
+    if (items.length === 0)
+      return { hasPendingDownloads: false, completedCount: 0, totalCount: 0 };
 
     // Reset state
     setHasErrors(false);
@@ -101,12 +116,10 @@ export const useDownload = (downloadVideos: boolean = true) => {
     const uncachedSongs: SongItem[] = [];
 
     items.forEach((item) => {
-      const file = getFileForSong(item);
-      if (file.exists) {
+      if (isSongCached(item))
         cachedSongs.push(item);
-      } else {
+      else
         uncachedSongs.push(item);
-      }
     });
 
     // Initialize download jobs for ALL songs
@@ -126,14 +139,28 @@ export const useDownload = (downloadVideos: boolean = true) => {
 
     // Start downloads for uncached songs in parallel
     uncachedSongs.forEach(downloadSingleSong);
+
+    return {
+      hasPendingDownloads: uncachedSongs.length > 0,
+      completedCount: cachedSongs.length,
+      totalCount: items.length,
+    };
   };
 
-  const getCompletedFiles = (): CompletedFileItem[] => {
-    return downloadJobs
+  const getCompletedItems = (): CompletedItem[] => {
+    const jobs = downloadJobsStore.getState();
+    return jobs
       .filter((job) => job.status === 'COMPLETED')
       .map((job) => {
-        const file = getFileForSong({ id: job.id, sourceId: job.sourceId } as SongItem);
-        return { file, title: job.title };
+        const item = { id: job.id, sourceId: job.sourceId } as SongItem;
+        const file = getFileForSong(item);
+        const folder = getFolderForSong(item);
+        return {
+          file: file.exists ? file : null,
+          folder: folder.exists ? folder : null,
+          title: job.title,
+          item,
+        };
       });
   };
 
@@ -142,15 +169,75 @@ export const useDownload = (downloadVideos: boolean = true) => {
     setHasErrors(false);
   };
 
-  const isDownloading = downloadJobs.length > 0 && 
-    downloadJobs.some(job => job.status !== 'COMPLETED');
+  const getCompletedCount = (): number => {
+    return getCompletedItems().length;
+  };
+
+  const waitForCompletedStateRender = async () => {
+    if (Platform.OS !== 'android')
+      return;
+
+    // wait a bit for ImportingContainer to transition to its completed state
+
+    await new Promise<void>((resolve) => {
+      setTimeout(resolve, 50);
+    });
+  };
+
+  const importCompletedDownloads = async (
+    onCompressionComplete?: (target: ImportReadyTarget) => void,
+  ): Promise<number> => {
+    const completedItems = getCompletedItems();
+
+    if (completedItems.length === 0)
+      return 0;
+
+    if (completedItems.length === 1) {
+      const item = completedItems[0];
+      const adxFile = getFileForSong(item.item);
+      const folder = getFolderForSong(item.item);
+
+      if (!adxFile.exists && folder.exists)
+        await zipSongFolder(folder, adxFile);
+
+      onCompressionComplete?.({ fileUri: adxFile.uri, title: item.title });
+      await waitForCompletedStateRender();
+      await openWithAstroDX(adxFile);
+      return 1;
+    }
+
+    for (const item of completedItems) {
+      const adxFile = getFileForSong(item.item);
+      const folder = getFolderForSong(item.item);
+
+      if (adxFile.exists && !folder.exists)
+        await unzipAdxFile(adxFile, folder);
+    }
+
+    const folders = completedItems.map((item) => getFolderForSong(item.item));
+    const combinedAdxFile = new File(Paths.cache, 'combined-songs.adx');
+
+    if (combinedAdxFile.exists)
+      combinedAdxFile.delete();
+    await zipFoldersToFile(folders, combinedAdxFile);
+
+    onCompressionComplete?.({ fileUri: combinedAdxFile.uri, title: 'Combined Songs' });
+    await waitForCompletedStateRender();
+    await openWithAstroDX(combinedAdxFile);
+    return completedItems.length;
+  };
+
+  const isDownloading = downloadJobs.length > 0
+    && downloadJobs.some((job) => job.status !== 'COMPLETED');
 
   return {
     downloadJobs,
     hasErrors,
     isDownloading,
     startDownloads,
-    getCompletedFiles,
+    getCompletedItems,
+    getCompletedCount,
+    importCompletedDownloads,
     clearDownloads,
   };
 };

@@ -1,4 +1,4 @@
-import { File, Directory, Paths } from 'expo-file-system';
+import { Directory, File, Paths } from 'expo-file-system';
 import type { AppSettings } from '../types';
 
 const SETTINGS_FILENAME = 'settings.json';
@@ -59,7 +59,7 @@ export async function saveSettings(settings: AppSettings): Promise<void> {
  */
 export async function updateSetting<K extends keyof AppSettings>(
   key: K,
-  value: AppSettings[K]
+  value: AppSettings[K],
 ): Promise<void> {
   const settings = await loadSettings();
   settings[key] = value;

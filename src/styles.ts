@@ -94,6 +94,7 @@ export const styles = StyleSheet.create({
   },
   songsList: {
     flex: 1,
+    marginTop: 8,
     paddingHorizontal: 16,
   },
   resultButton: {
@@ -205,19 +206,19 @@ export const styles = StyleSheet.create({
     backgroundColor: '#1b1f2a',
     borderRadius: 12,
     padding: 20,
-    
+
     // Limits horizontal growth on large screens
-    maxWidth: 400, 
-    
+    maxWidth: 400,
+
     // Limits horizontal growth on small screens (keeps it from touching edges)
-    width: '90%', 
-    
+    width: '90%',
+
     // Forces the modal to only be as tall as its children
     // If it's still too long, check if a child has { flex: 1 }
-    alignSelf: 'center', 
-    
+    alignSelf: 'center',
+
     // Safety check: prevents it from bleeding off the top/bottom
-    maxHeight: '80%', 
+    maxHeight: '80%',
   },
   helpModalTitle: {
     fontSize: 18,
@@ -361,7 +362,6 @@ export const styles = StyleSheet.create({
     paddingHorizontal: 20,
     borderRadius: 6,
     alignItems: 'center',
-    marginTop: 16,
   },
   downloadingModalCompleteButtonText: {
     color: '#fff',
@@ -455,7 +455,7 @@ export const styles = StyleSheet.create({
     padding: 4,
   },
   reviewModalButtons: {
-    gap: 12,
+    gap: 8,
   },
   reviewModalClearButton: {
     paddingVertical: 12,
@@ -468,6 +468,17 @@ export const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '600',
   },
+  reviewModalDownloadOnlyButton: {
+    paddingVertical: 12,
+    paddingHorizontal: 20,
+    borderRadius: 6,
+    alignItems: 'center',
+  },
+  reviewModalDownloadOnlyButtonText: {
+    color: '#007AFF',
+    fontSize: 16,
+    fontWeight: '600',
+  },
   reviewModalDownloadButton: {
     backgroundColor: '#4caf50',
     paddingVertical: 12,
@@ -476,11 +487,34 @@ export const styles = StyleSheet.create({
     alignItems: 'center',
     flexDirection: 'row',
     justifyContent: 'center',
-    gap: 8,
+    gap: 2,
   },
   reviewModalDownloadButtonText: {
     color: '#fff',
     fontSize: 16,
     fontWeight: '600',
+  },
+  importingModalButtons: {
+    gap: 8,
+    alignSelf: 'stretch',
+    marginTop: 16,
+  },
+  importingModalImportButton: {
+    backgroundColor: '#4caf50',
+    paddingVertical: 12,
+    paddingHorizontal: 20,
+    borderRadius: 6,
+    alignItems: 'center',
+    justifyContent: 'center',
+    flexDirection: 'row',
+    gap: 2,
+  },
+  importingModalCloseButton: {
+    backgroundColor: '#007AFF',
+    paddingVertical: 12,
+    paddingHorizontal: 20,
+    borderRadius: 6,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
 });
