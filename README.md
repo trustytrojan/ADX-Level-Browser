@@ -14,12 +14,26 @@ An [Expo](https://expo.dev) app providing an all-in-one interface for searching,
 For both **Android and iOS/iPadOS,** you can download the latest build [here](https://nightly.link/trustytrojan/ADX-Level-Browser/workflows/build/master). Make sure to download the correct build artifact `.zip` file for your platform. The `.apk` or `.ipa` file is inside the respective `.zip` file, so extract it first.
 
 ### iOS/iPadOS Sideloading
-The IPAs built on GitHub Actions **must be sideloaded.** I personally recommend using [SideStore](https://sidestore.io/); you can read installation instructions on its website.
+The `.ipa` files built on GitHub Actions **must be sideloaded.** I personally recommend using [SideStore](https://sidestore.io/); you can read installation instructions on its website.
 
 ### Expo Go
 If for some reason you cannot install the APK/IPA files from above, your last option is to run the app within **Expo Go** ([Play Store](https://play.google.com/store/apps/details?id=host.exp.exponent), [App Store](https://apps.apple.com/us/app/expo-go/id982107779)). I will be hosting a tunneled Expo development server to make this possible. Once you have Expo Go installed, simply scan the QR code below (may not always work, [report](#submitting-bug-reports-and-feature-requests) if broken) with your device's camera app.
 ```
-(not available at the moment, please wait)
+█████████████████████████████
+██ ▄▄▄▄▄ █▀▀ ██▄  ▄█ ▄▄▄▄▄ ██
+██ █   █ █▄▀██▀▀▄█ █ █   █ ██
+██ █▄▄▄█ █ ▄ █  ▄▀▄█ █▄▄▄█ ██
+██▄▄▄▄▄▄▄█ █ ▀▄▀ ▀ █▄▄▄▄▄▄▄██
+██▄▄█▄█▀▄▄▀▀█   █▀▄█   ▀▄▄▀██
+██    ▀▀▄▀█▀▀   ▀ ▄ ▄██▀█▄▄██
+██▄█▀ █▀▄█▀▀▄ █▀▄▀▄▀▄█ ▀▀█▀██
+██▄▀ █  ▄█▄█▄ █▄▄ ▀   █▀ █▄██
+██▄▄▄▄██▄▄▀ ▀█  ▀█ ▄▄▄ ▄▄▄ ██
+██ ▄▄▄▄▄ █▄▀▄▄ █ ▀ █▄█ ▄█▄ ██
+██ █   █ █▀█▀▀██▀▀▄   ▄██ ▄██
+██ █▄▄▄█ █▀█ ███▀  ██ ▄▄ █▄██
+██▄▄▄▄▄▄▄█▄█▄█▄██▄▄█▄█▄▄█▄▄██
+█████████████████████████████
 ```
 
 **There is one caveat to running in Expo Go,** however. Since Expo Go can't dynamically link to native libraries, the unzipping/zipping process of ADX files has to happen synchronously in pure JavaScript code, which will be a lot slower than native builds. Everything else should function as intended.
