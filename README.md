@@ -11,35 +11,18 @@ An [Expo](https://expo.dev) app providing an all-in-one interface for searching,
 - **[Majdata.net](https://majdata.net) is added as a default source,** so you can find levels right away!
 
 ## Installing/Running the app
+For both **Android and iOS/iPadOS,** you can download the latest build [here](https://nightly.link/trustytrojan/ADX-Level-Browser/workflows/build/master). Make sure to download the correct build artifact `.zip` file for your platform. The `.apk` or `.ipa` file is inside the respective `.zip` file, so extract it first.
 
-### Android
-APKs are built on every commit with GitHub Actions. You can download the latest build artifact [here](https://nightly.link/trustytrojan/ADX-Level-Browser/workflows/build/master/adx-level-browser-android.zip); the APK file is inside the ZIP file.
-
-### iOS/iPadOS
-**Unsigned** IPAs are built on every commit with GitHub Actions. You can download the latest build artifact [here](https://nightly.link/trustytrojan/ADX-Level-Browser/workflows/build/master/adx-level-browser-ios.zip); the IPA file is inside the ZIP file. **You must sideload the IPA.** I personally recommend using [SideStore](https://sidestore.io/); you can read installation instructions on its website.
+### iOS/iPadOS Sideloading
+The IPAs built on GitHub Actions **must be sideloaded.** I personally recommend using [SideStore](https://sidestore.io/); you can read installation instructions on its website.
 
 ### Expo Go
 If for some reason you cannot install the APK/IPA files from above, your last option is to run the app within **Expo Go** ([Play Store](https://play.google.com/store/apps/details?id=host.exp.exponent), [App Store](https://apps.apple.com/us/app/expo-go/id982107779)). I will be hosting a tunneled Expo development server to make this possible. Once you have Expo Go installed, simply scan the QR code below (may not always work, [report](#submitting-bug-reports-and-feature-requests) if broken) with your device's camera app.
 ```
-▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄
-█ ▄▄▄▄▄ █▄▄▄ ▀ ▄██ ▀▀██ ▄▄▄▄▄ █
-█ █   █ ██▄▀ █ ▄█▄▀▀▄▄█ █   █ █
-█ █▄▄▄█ ██▀▄ ▄▀▄█▄▀▄▄▀█ █▄▄▄█ █
-█▄▄▄▄▄▄▄█ ▀▄█ ▀▄█▄█▄█▄█▄▄▄▄▄▄▄█
-█▄▄▀  █▄█▀▄▀█▄█▄▀▄ ▄▀█▀▄█▀██▀▄█
-█   █▄▀▄▄▀▄██▄██▄█  █▀▄▀▄███▄▀█
-█▄  ▀▀▄▄█ ▄ █▀▄   █▄█▄▄  ▀▄█  █
-█▀▀▀▀█▀▄█▀ ▄█▀▀  ▄█ ▄ ▀▀ ██ █ █
-█ ▀▀▄▀ ▄ █ ▄ ▄██▀▀█▄ ▀██▄▀▀▀ ▄█
-█  █ ██▄ ▄▄█▀▄ ▄▄▄▄ ▄▄ ▄▄▄█▀▀▄█
-█▄▄█▄█▄▄█ ▄▀▄▀ █ █▄▄█ ▄▄▄ ▄▄█▄█
-█ ▄▄▄▄▄ ███▀ ▀ █▄▀ ▄  █▄█ ▄█▀██
-█ █   █ █ ▀▄▄▄ ▀▀▀▀ ▄▄ ▄ ▄▀▀█ █
-█ █▄▄▄█ █▀ ▄ ▄▄█▄█▄▀█▄ █  ▄▀▄ █
-█▄▄▄▄▄▄▄█▄▄▄███▄▄███▄▄▄▄█▄▄████
+(not available at the moment, please wait)
 ```
 
-**There is one caveat to running in Expo Go,** however: since Expo Go can't dynamically link to native libraries, the unzipping/zipping process of ADX files has to happen synchronously in pure JavaScript code, which **will be slow.** Everything else should function as intended.
+**There is one caveat to running in Expo Go,** however. Since Expo Go can't dynamically link to native libraries, the unzipping/zipping process of ADX files has to happen synchronously in pure JavaScript code, which will be a lot slower than native builds. Everything else should function as intended.
 
 ## Submitting bug reports and feature requests
 [Submit an issue](https://github.com/trustytrojan/ADX-Level-Browser/issues) in this repository, or ping @trustytrojan in the [official AstroDX Discord server](https://discord.gg/6fpETgpvjZ).
@@ -61,5 +44,5 @@ I only built an APK on Linux, but given that Android tooling is available for al
 3. Run `expo prebuild -p android` to let Expo generate the Android build environment.
 4. Run `cd android` then `./gradlew assembleRelease`. The APK is located at `android/app/build/outputs/apk/release/app-release.apk` relative to the project root.
 
-### iOS
+### iOS/iPadOS
 See the dedicated Github Actions [workflow file](.github/workflows/build-ios.yml).
