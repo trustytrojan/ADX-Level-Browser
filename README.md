@@ -1,5 +1,5 @@
 # ADX Level Browser
-An [Expo](https://expo.dev) app providing an all-in-one interface for searching, downloading, and importing levels to AstroDX.
+An [Expo](https://expo.dev) app providing an all-in-one interface for searching, downloading, and importing levels to [AstroDX](https://www.astrodx.com/).
 
 ## Features
 - Downloaded levels **open directly in AstroDX** on your mobile device, **no file management hassle!**
