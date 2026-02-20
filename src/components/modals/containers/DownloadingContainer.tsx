@@ -62,7 +62,7 @@ export const DownloadingContainer = ({
           <ScrollView style={styles.downloadingModalList}>
             {downloadJobs
               // display the currently downloading songs first
-              .sort(job => job.status === 'IN_PROGRESS' ? -1 : 0)
+              .sort((job) => job.status === 'IN_PROGRESS' ? -1 : 0)
               .map((job) => {
                 const isCompleted = job.status === 'COMPLETED';
                 const isInProgress = job.status === 'IN_PROGRESS';
@@ -82,8 +82,7 @@ export const DownloadingContainer = ({
                     variant='downloading'
                   />
                 );
-              })
-            }
+              })}
           </ScrollView>
         )}
 

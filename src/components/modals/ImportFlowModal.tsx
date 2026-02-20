@@ -45,13 +45,7 @@ export const ImportFlowModal = ({
   onRetryImporting,
   onCloseImporting,
 }: ImportFlowModalProps) => {
-  const mode = importingVisible
-    ? 'importing'
-    : downloadingVisible
-    ? 'downloading'
-    : reviewVisible
-    ? 'review'
-    : null;
+  const mode = importingVisible ? 'importing' : downloadingVisible ? 'downloading' : reviewVisible ? 'review' : null;
 
   const allComplete = downloadJobs.length > 0 && downloadJobs.every((job) => job.status === 'COMPLETED');
   const canDismissDownloading = hasErrors || (showCloseOnComplete && allComplete);

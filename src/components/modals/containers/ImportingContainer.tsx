@@ -35,9 +35,8 @@ export const ImportingContainer = ({
             1. Tap <Text style={{ fontWeight: 'bold' }}>Save to Files</Text>
           </Text>
           <Text style={{ color: '#9aa3b2', fontSize: 14 }}>
-            2. Navigate to <Text style={{ fontWeight: 'bold' }}>On My {iDevice} </Text>
-            <FontAwesome6 name='arrow-right' color='#9aa3b2' />
-            <Text style={{ fontWeight: 'bold' }}> AstroDX</Text>
+            2. Navigate to <Text style={{ fontWeight: 'bold' }}>On My {iDevice}</Text>{' '}
+            <FontAwesome6 name='arrow-right' color='#9aa3b2' /> <Text style={{ fontWeight: 'bold' }}>AstroDX</Text>
           </Text>
           <Text style={{ color: '#9aa3b2', fontSize: 14, textAlign: 'left' }}>
             3. Press <Text style={{ fontWeight: 'bold' }}>Save</Text>
