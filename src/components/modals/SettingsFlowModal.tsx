@@ -129,7 +129,7 @@ export const SettingsFlowModal = ({
     <Modal
       visible={visible}
       animationType='none'
-      transparent={true}
+      transparent
       onRequestClose={onClose}
     >
       <View style={styles.helpModalOverlay}>

@@ -48,7 +48,7 @@ export async function loadSettings(): Promise<AppSettings> {
 /**
  * Save app settings to storage
  */
-export async function saveSettings(settings: AppSettings): Promise<void> {
+export function saveSettings(settings: AppSettings) {
   const settingsFile = getSettingsFile();
   const jsonText = JSON.stringify(settings, null, 2);
   settingsFile.write(jsonText);

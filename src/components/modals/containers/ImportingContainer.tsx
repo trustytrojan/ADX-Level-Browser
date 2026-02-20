@@ -1,5 +1,5 @@
 import { ActivityIndicator, Platform, Text, TouchableOpacity, View } from 'react-native';
-import { FontAwesome6, Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
+import { FontAwesome6, MaterialCommunityIcons } from '@expo/vector-icons';
 import { styles } from '../../../styles';
 
 interface ImportingContainerProps {

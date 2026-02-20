@@ -55,9 +55,9 @@ export const ImportFlowModal = ({
 
   return (
     <Modal
-      visible={true}
+      visible
       animationType='none'
-      transparent={true}
+      transparent
       onRequestClose={() => {
         if (mode === 'review') {
           onCloseReview();
