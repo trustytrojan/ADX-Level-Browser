@@ -1,5 +1,5 @@
 import { StatusBar } from 'expo-status-bar';
-import { ActivityIndicator, Linking, TouchableOpacity, Text, View } from 'react-native';
+import { ActivityIndicator, Linking, Text, TouchableOpacity, View } from 'react-native';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import type { AppSettings, SongItem } from './types';
 import { SearchBar } from './components/SearchBar';
@@ -60,24 +60,28 @@ export default function App() {
       const enabledSourceCount = await getEnabledSourceCount();
       setRemainingSources(enabledSourceCount);
 
-      const result = await loadNextPage(initialPagination, search, ({ songs: sourceSongs, paginationState, remainingSources }) => {
-        setRemainingSources(remainingSources);
-        setPaginationState(paginationState);
+      const result = await loadNextPage(
+        initialPagination,
+        search,
+        ({ songs: sourceSongs, paginationState, remainingSources }) => {
+          setRemainingSources(remainingSources);
+          setPaginationState(paginationState);
 
-        if (sourceSongs.length > 0) {
-          setSongs((prev) => {
-            const existingKeys = new Set(prev.map((song) => `${song.sourceId}:${song.id}`));
-            const newUniqueSongs = sourceSongs.filter(
-              (song) => !existingKeys.has(`${song.sourceId}:${song.id}`),
-            );
+          if (sourceSongs.length > 0) {
+            setSongs((prev) => {
+              const existingKeys = new Set(prev.map((song) => `${song.sourceId}:${song.id}`));
+              const newUniqueSongs = sourceSongs.filter(
+                (song) => !existingKeys.has(`${song.sourceId}:${song.id}`),
+              );
 
-            if (newUniqueSongs.length === 0)
-              return prev;
+              if (newUniqueSongs.length === 0)
+                return prev;
 
-            return [...prev, ...newUniqueSongs];
-          });
-        }
-      });
+              return [...prev, ...newUniqueSongs];
+            });
+          }
+        },
+      );
 
       setPaginationState(result.paginationState);
     } catch (err) {
@@ -241,7 +245,7 @@ export default function App() {
 
   const handleSettingsChange = async (newSettings: AppSettings) => {
     setSettings(newSettings);
-    await saveSettings(newSettings);
+    saveSettings(newSettings);
   };
 
   const handleCacheCleared = () => {
@@ -284,7 +288,9 @@ export default function App() {
       {loading && (
         <View style={styles.loadingContainer}>
           <ActivityIndicator size='large' color='#007AFF' />
-          <Text style={styles.loadingText}>Loading songs from {remainingSources} source{remainingSources > 1 ? 's' : ''}...</Text>
+          <Text style={styles.loadingText}>
+            Loading songs from {remainingSources} source{remainingSources > 1 ? 's' : ''}...
+          </Text>
         </View>
       )}
 

@@ -33,7 +33,7 @@ export async function loadSources(): Promise<Source[]> {
 
   if (!sourcesFile.exists) {
     // Create default sources file
-    await saveSources(DEFAULT_SOURCES);
+    saveSources(DEFAULT_SOURCES);
     return DEFAULT_SOURCES;
   }
 
@@ -51,7 +51,7 @@ export async function loadSources(): Promise<Source[]> {
 /**
  * Save sources to storage
  */
-export async function saveSources(sources: Source[]): Promise<void> {
+export function saveSources(sources: Source[]) {
   const sourcesFile = getSourcesFile();
   const jsonText = JSON.stringify(sources, null, 2);
   sourcesFile.write(jsonText);
@@ -68,7 +68,7 @@ export async function addSource(source: Source): Promise<void> {
     throw new Error(`Source with id "${source.id}" already exists`);
 
   sources.push(source);
-  await saveSources(sources);
+  saveSources(sources);
 }
 
 /**
@@ -88,7 +88,7 @@ export async function updateSource(sourceId: string, updatedSource: Partial<Sour
     id: sourceId, // Preserve original ID
   };
 
-  await saveSources(sources);
+  saveSources(sources);
 }
 
 /**
@@ -101,7 +101,7 @@ export async function deleteSource(sourceId: string): Promise<void> {
   if (filtered.length === sources.length)
     throw new Error(`Source with id "${sourceId}" not found`);
 
-  await saveSources(filtered);
+  saveSources(filtered);
 }
 
 /**
@@ -145,13 +145,13 @@ export async function fetchSongList(
   if (!response.ok)
     throw new Error(`Failed to fetch from ${source.name}: ${response.status} ${response.statusText}`);
 
-  const songs = await response.json();
+  const songs: Song[] = await response.json();
 
   // Add sourceId to each song
-  const processedSongs = songs.map((song: any) => ({
+  const processedSongs = songs.map((song) => ({
     ...song,
     sourceId: source.id,
-    id: song.id || song.songId || '',
+    id: song.id || '',
     title: song.title || 'Unknown',
     artist: song.artist || '',
   }));
