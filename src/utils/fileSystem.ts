@@ -1,6 +1,10 @@
 import { Directory, File, Paths } from 'expo-file-system';
 import type { SongItem } from '../types';
 
+/*
+Keep all song data in **app cache**, not **persistent data**.
+*/
+
 export const getFileForSong = (item: SongItem): File => {
   // Use the song's unique ID
   const id = item.id;
@@ -8,7 +12,7 @@ export const getFileForSong = (item: SongItem): File => {
     throw new Error('Song must have an id');
   // Include sourceId in filename to ensure uniqueness across sources
   const fileName = `${item.sourceId}_${id}.adx`;
-  const downloadsDir = new Directory(Paths.document, 'adx-downloads');
+  const downloadsDir = new Directory(Paths.cache, 'adx-downloads');
   downloadsDir.create({ intermediates: true, idempotent: true });
   return new File(downloadsDir, fileName);
 };
@@ -20,13 +24,13 @@ export const getFolderForSong = (item: SongItem): Directory => {
     throw new Error('Song must have an id');
   // Include sourceId in folder name to ensure uniqueness across sources
   const folderName = `${item.sourceId}_${id}`;
-  const downloadsDir = new Directory(Paths.document, 'adx-downloads');
+  const downloadsDir = new Directory(Paths.cache, 'adx-downloads');
   downloadsDir.create({ intermediates: true, idempotent: true });
   return new Directory(downloadsDir, folderName);
 };
 
 export const clearDownloadCache = async (): Promise<void> => {
-  const downloadsDir = new Directory(Paths.document, 'adx-downloads');
+  const downloadsDir = new Directory(Paths.cache, 'adx-downloads');
   try {
     // Delete the entire adx-downloads directory
     if (downloadsDir.exists)

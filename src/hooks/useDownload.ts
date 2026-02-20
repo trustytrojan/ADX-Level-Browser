@@ -215,8 +215,7 @@ export const useDownload = (downloadVideos: boolean = true) => {
     }
 
     const folders = completedItems.map((item) => getFolderForSong(item.item));
-    const combinedAdxPath = `${Paths.document.uri}combined-songs.adx`;
-    const combinedAdxFile = new File(combinedAdxPath);
+    const combinedAdxFile = new File(Paths.cache, 'combined-songs.adx');
 
     if (combinedAdxFile.exists)
       combinedAdxFile.delete();

@@ -4,7 +4,8 @@ import type { Song } from '../types';
 import { unzipFileToFolder, zipFolderToFile } from '../utils/archive';
 import { getChartUrl, getImageUrl, getSource, getTrackUrl, getVideoUrl } from './sources';
 
-const sanitizeFilename = (s: string) => s.replace(/[^a-z0-9._-]/gi, '-');
+// This is all we need to do for a POSIX filesystem.
+const sanitizeFilename = (s: string) => s.replaceAll('/', '_');
 
 /**
  * Download a song from any source to an uncompressed folder
@@ -24,7 +25,8 @@ export const downloadSong = async (
   if (!source)
     throw new Error(`Source "${song.sourceId}" not found`);
 
-  const songDirName = sanitizeFilename(song.title);
+  // This avoids the problem caused by bulk importing two levels with the same song title.
+  const songDirName = sanitizeFilename(`${song.title}-${song.id}`);
 
   // Create the song directory inside the output folder
   const songDir = new Directory(outputFolder, songDirName);
