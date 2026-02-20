@@ -33,7 +33,7 @@ export async function loadSources(): Promise<Source[]> {
 
   if (!sourcesFile.exists) {
     // Create default sources file
-    await saveSources(DEFAULT_SOURCES);
+    saveSources(DEFAULT_SOURCES);
     return DEFAULT_SOURCES;
   }
 
@@ -68,7 +68,7 @@ export async function addSource(source: Source): Promise<void> {
     throw new Error(`Source with id "${source.id}" already exists`);
 
   sources.push(source);
-  await saveSources(sources);
+  saveSources(sources);
 }
 
 /**
@@ -88,7 +88,7 @@ export async function updateSource(sourceId: string, updatedSource: Partial<Sour
     id: sourceId, // Preserve original ID
   };
 
-  await saveSources(sources);
+  saveSources(sources);
 }
 
 /**
@@ -101,7 +101,7 @@ export async function deleteSource(sourceId: string): Promise<void> {
   if (filtered.length === sources.length)
     throw new Error(`Source with id "${sourceId}" not found`);
 
-  await saveSources(filtered);
+  saveSources(filtered);
 }
 
 /**

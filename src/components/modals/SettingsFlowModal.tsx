@@ -59,7 +59,7 @@ export const SettingsFlowModal = ({
   const handleClearCache = async () => {
     setClearingCache(true);
     try {
-      await clearDownloadCache();
+      clearDownloadCache();
       setCacheCleared(true);
       onCacheCleared();
       setTimeout(() => setCacheCleared(false), 2000);

@@ -245,7 +245,7 @@ export default function App() {
 
   const handleSettingsChange = async (newSettings: AppSettings) => {
     setSettings(newSettings);
-    await saveSettings(newSettings);
+    saveSettings(newSettings);
   };
 
   const handleCacheCleared = () => {
