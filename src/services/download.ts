@@ -1,7 +1,7 @@
 import * as FileSystem from 'expo-file-system/legacy';
 import { Directory, File, Paths } from 'expo-file-system';
-import { Platform } from 'react-native';
 import type { Song } from '../types';
+import { unzipFileToFolder, zipFolderToFile } from '../utils/archive';
 import { getChartUrl, getImageUrl, getSource, getTrackUrl, getVideoUrl } from './sources';
 
 const sanitizeFilename = (s: string) => s.replace(/[^a-z0-9._-]/gi, '-');
@@ -91,44 +91,8 @@ export const zipSongFolder = async (
   songFolder: Directory,
   outputFile: File,
 ): Promise<void> => {
-  if (!songFolder.exists)
-    throw new Error(`Song folder does not exist: ${songFolder.uri}`);
-
   try {
-    if (Platform.OS === 'android') {
-      const { zip } = await import('react-native-zip-archive');
-      await zip(songFolder.uri, outputFile.uri);
-    } else if (Platform.OS === 'ios') {
-      const fflate = await import('fflate');
-
-      // The song folder should contain a subdirectory with the song name
-      // We need to find that subdirectory and read its files
-      // For simplicity, we'll use FileSystem.readDirectoryAsync to get contents
-      const legacyFileSystem = await import('expo-file-system/legacy');
-      const contents = await legacyFileSystem.readDirectoryAsync(songFolder.uri);
-
-      const filesToZip: Record<string, Uint8Array> = {};
-
-      // Read all subdirectories (song folders)
-      for (const itemName of contents) {
-        const itemPath = `${songFolder.uri}/${itemName}`;
-        const itemInfo = await legacyFileSystem.getInfoAsync(itemPath);
-
-        if (itemInfo.exists && itemInfo.isDirectory) {
-          // This is a song subdirectory, read its files
-          const songFiles = await legacyFileSystem.readDirectoryAsync(itemPath);
-          for (const fileName of songFiles) {
-            const filePath = `${itemPath}/${fileName}`;
-            const file = new File(filePath);
-            if (file.exists)
-              filesToZip[`${itemName}/${fileName}`] = file.bytesSync();
-          }
-        }
-      }
-
-      const zipped = fflate.zipSync(filesToZip);
-      outputFile.write(zipped);
-    }
+    await zipFolderToFile(songFolder, outputFile);
   } catch (error) {
     console.error('Error zipping song folder:', error);
     throw error;
@@ -145,38 +109,8 @@ export const unzipAdxFile = async (
   adxFile: File,
   outputFolder: Directory,
 ): Promise<void> => {
-  if (!adxFile.exists)
-    throw new Error(`ADX file does not exist: ${adxFile.uri}`);
-
   try {
-    // Create the output folder if it doesn't exist
-    outputFolder.create({ intermediates: true, idempotent: true });
-
-    if (Platform.OS === 'android') {
-      const { unzip } = await import('react-native-zip-archive');
-      await unzip(adxFile.uri, outputFolder.uri);
-    } else if (Platform.OS === 'ios') {
-      const fflate = await import('fflate');
-
-      const bytes = adxFile.bytesSync();
-      const unzippedFiles = fflate.unzipSync(bytes);
-
-      // Write all extracted files
-      for (const [path, content] of Object.entries(unzippedFiles)) {
-        const filePath = `${outputFolder.uri}/${path}`;
-        const file = new File(filePath);
-
-        // Create parent directory if needed
-        const pathParts = path.split('/');
-        if (pathParts.length > 1) {
-          const parentPath = pathParts.slice(0, -1).join('/');
-          const parentDir = new Directory(outputFolder, parentPath);
-          parentDir.create({ intermediates: true, idempotent: true });
-        }
-
-        file.write(content);
-      }
-    }
+    await unzipFileToFolder(adxFile, outputFolder);
   } catch (error) {
     console.error('Error unzipping ADX file:', error);
     throw error;

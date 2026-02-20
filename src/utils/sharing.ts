@@ -6,13 +6,13 @@ import * as IntentLauncher from 'expo-intent-launcher';
 
 export const openWithAstroDX = async (file: File) => {
   if (Platform.OS === 'android') {
-    IntentLauncher.startActivityAsync('android.intent.action.VIEW', {
+    await IntentLauncher.startActivityAsync('android.intent.action.VIEW', {
       data: file.contentUri ?? await getContentUriAsync(file.uri),
       flags: 1,
       packageName: 'com.Reflektone.AstroDX',
     });
   } else if (Platform.OS === 'ios') {
-    Sharing.shareAsync(file.uri);
+    await Sharing.shareAsync(file.uri);
   } else {
     throw new Error('Unsupported platform');
   }

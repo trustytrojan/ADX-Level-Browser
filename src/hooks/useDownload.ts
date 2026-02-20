@@ -2,6 +2,7 @@ import { useCallback, useRef, useSyncExternalStore } from 'react';
 import { Directory, File, Paths } from 'expo-file-system';
 import { Platform } from 'react-native';
 import type { DownloadJobItem, SongItem } from '../types';
+import { zipFoldersToFile } from '../utils/archive';
 import { getFileForSong, getFolderForSong } from '../utils/fileSystem';
 import { downloadSong, unzipAdxFile, zipSongFolder } from '../services/download';
 import { openWithAstroDX } from '../utils/sharing';
@@ -219,38 +220,7 @@ export const useDownload = (downloadVideos: boolean = true) => {
 
     if (combinedAdxFile.exists)
       combinedAdxFile.delete();
-
-    if (Platform.OS === 'android') {
-      const { zip } = await import('react-native-zip-archive');
-      const folderPaths = folders.map((folder) => folder.uri);
-      await zip(folderPaths, combinedAdxPath);
-    } else if (Platform.OS === 'ios') {
-      const fflate = await import('fflate');
-      const allSongFiles: Record<string, Uint8Array> = {};
-      const legacyFileSystem = await import('expo-file-system/legacy');
-
-      for (const folder of folders) {
-        const contents = await legacyFileSystem.readDirectoryAsync(folder.uri);
-
-        for (const itemName of contents) {
-          const itemPath = `${folder.uri}/${itemName}`;
-          const itemInfo = await legacyFileSystem.getInfoAsync(itemPath);
-
-          if (itemInfo.exists && itemInfo.isDirectory) {
-            const songFiles = await legacyFileSystem.readDirectoryAsync(itemPath);
-            for (const fileName of songFiles) {
-              const filePath = `${itemPath}/${fileName}`;
-              const file = new File(filePath);
-              if (file.exists)
-                allSongFiles[`${itemName}/${fileName}`] = file.bytesSync();
-            }
-          }
-        }
-      }
-
-      const zipped = fflate.zipSync(allSongFiles);
-      combinedAdxFile.write(zipped);
-    }
+    await zipFoldersToFile(folders, combinedAdxFile);
 
     onCompressionComplete?.({ fileUri: combinedAdxFile.uri, title: 'Combined Songs' });
     await waitForCompletedStateRender();
