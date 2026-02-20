@@ -8,7 +8,7 @@ import { HelpModal } from './components/modals/HelpModal';
 import { SettingsFlowModal } from './components/modals/SettingsFlowModal';
 import { ImportFlowModal } from './components/modals/ImportFlowModal';
 import { useDownloadFlow } from './hooks/useDownloadFlow';
-import { styles } from './styles/AppStyles';
+import { styles } from './styles';
 import {
   getEnabledSourceCount,
   loadNextPage,

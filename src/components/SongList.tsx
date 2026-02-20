@@ -3,7 +3,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import type { SongItem } from '../types';
 import { SongElement } from './SongElement';
 import { getFileForSong, getFolderForSong } from '../utils/fileSystem';
-import { styles } from '../styles/AppStyles';
+import { styles } from '../styles';
 
 interface SongListProps {
   songs: SongItem[];

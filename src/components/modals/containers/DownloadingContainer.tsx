@@ -1,7 +1,7 @@
 import { ActivityIndicator, ScrollView, Text, TouchableOpacity, View } from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import type { DownloadJobItem } from '../../../types';
-import { styles } from '../../../styles/AppStyles';
+import { styles } from '../../../styles';
 import { ModalSongElement } from '../ModalSongElement';
 
 interface DownloadingContainerProps {

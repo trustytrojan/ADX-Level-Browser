@@ -1,6 +1,6 @@
 import { Text, TouchableOpacity, View } from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
-import { styles } from '../../styles/AppStyles';
+import { styles } from '../../styles';
 
 interface ModalSongElementProps {
   title: string;

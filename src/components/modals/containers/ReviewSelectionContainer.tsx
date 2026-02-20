@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { ScrollView, Text, TouchableOpacity, View } from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import type { SongItem } from '../../../types';
-import { styles } from '../../../styles/AppStyles';
+import { styles } from '../../../styles';
 import { getFileForSong, getFolderForSong } from '../../../utils/fileSystem';
 import { ModalSongElement } from '../ModalSongElement';
 

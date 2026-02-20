@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { ActivityIndicator, Modal, TouchableOpacity, ScrollView, Switch, Text, TextInput, View } from 'react-native';
-import { styles } from '../../styles/AppStyles';
+import { styles } from '../../styles';
 import { clearDownloadCache } from '../../utils/fileSystem';
 import { addSource, deleteSource, loadSources, updateSource } from '../../services/sources';
 import { SourcesList } from '../SourcesList';

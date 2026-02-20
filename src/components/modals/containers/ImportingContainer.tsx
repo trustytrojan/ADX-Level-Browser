@@ -1,6 +1,6 @@
 import { ActivityIndicator, Platform, Text, TouchableOpacity, View } from 'react-native';
 import { FontAwesome6, Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
-import { styles } from '../../../styles/AppStyles';
+import { styles } from '../../../styles';
 
 interface ImportingContainerProps {
   songCount: number;
@@ -42,6 +42,9 @@ export const ImportingContainer = ({
           <Text style={{ color: '#9aa3b2', fontSize: 14, textAlign: 'left' }}>
             3. Press <Text style={{ fontWeight: 'bold' }}>Save</Text>
           </Text>
+          <Text style={{ color: '#9aa3b2', fontSize: 14, textAlign: 'left' }}>
+            4. <Text style={{ fontWeight: 'bold' }}>Restart</Text> AstroDX
+          </Text>
         </View>
       )
     : (
@@ -72,11 +75,11 @@ export const ImportingContainer = ({
               style={styles.importingModalImportButton}
               onPress={onImport}
             >
-            <MaterialCommunityIcons
-              name='import'
-              size={20}
-              color='#fff'
-            />
+              <MaterialCommunityIcons
+                name='import'
+                size={20}
+                color='#fff'
+              />
               <Text style={styles.reviewModalDownloadButtonText}>Import</Text>
             </TouchableOpacity>
 

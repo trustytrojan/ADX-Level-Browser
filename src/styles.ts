@@ -487,7 +487,7 @@ export const styles = StyleSheet.create({
     alignItems: 'center',
     flexDirection: 'row',
     justifyContent: 'center',
-    gap: 8,
+    gap: 2,
   },
   reviewModalDownloadButtonText: {
     color: '#fff',
@@ -507,6 +507,7 @@ export const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     flexDirection: 'row',
+    gap: 2,
   },
   importingModalCloseButton: {
     backgroundColor: '#007AFF',

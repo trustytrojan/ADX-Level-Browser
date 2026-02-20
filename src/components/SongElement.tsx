@@ -2,7 +2,7 @@ import { ActivityIndicator, Text, TouchableOpacity, View } from 'react-native';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { memo } from 'react';
 import type { DownloadJobItem, SongItem } from '../types';
-import { styles } from '../styles/AppStyles';
+import { styles } from '../styles';
 
 type ElementItem = SongItem | DownloadJobItem;
 
