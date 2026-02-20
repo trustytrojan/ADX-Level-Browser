@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { ActivityIndicator, Modal, Pressable, ScrollView, Switch, Text, TextInput, View } from 'react-native';
+import { ActivityIndicator, Modal, TouchableOpacity, ScrollView, Switch, Text, TextInput, View } from 'react-native';
 import { styles } from '../../styles/AppStyles';
 import { clearDownloadCache } from '../../utils/fileSystem';
 import { addSource, deleteSource, loadSources, updateSource } from '../../services/sources';
@@ -132,7 +132,7 @@ export const SettingsFlowModal = ({
       transparent={true}
       onRequestClose={onClose}
     >
-      <Pressable style={styles.helpModalOverlay}>
+      <TouchableOpacity style={styles.helpModalOverlay}>
         <View style={styles.helpModalContent}>
           {mode === 'settings' && (
             <ScrollView showsVerticalScrollIndicator={false}>
@@ -184,7 +184,7 @@ export const SettingsFlowModal = ({
               />
 
               <View style={{ gap: 8 }}>
-                <Pressable
+                <TouchableOpacity
                   style={[
                     styles.helpModalCloseButton,
                     { backgroundColor: '#ff6b6b' },
@@ -198,14 +198,14 @@ export const SettingsFlowModal = ({
                     : cacheCleared
                     ? <Text style={styles.helpModalCloseButtonText}>✓ Cache Cleared</Text>
                     : <Text style={styles.helpModalCloseButtonText}>Clear Download Cache</Text>}
-                </Pressable>
+                </TouchableOpacity>
 
-                <Pressable
+                <TouchableOpacity
                   style={styles.helpModalCloseButton}
                   onPress={onClose}
                 >
                   <Text style={styles.helpModalCloseButtonText}>Close</Text>
-                </Pressable>
+                </TouchableOpacity>
               </View>
             </ScrollView>
           )}
@@ -252,7 +252,7 @@ export const SettingsFlowModal = ({
               </View>
 
               <View style={{ gap: 8 }}>
-                <Pressable
+                <TouchableOpacity
                   style={[
                     styles.helpModalCloseButton,
                     { backgroundColor: '#007AFF' },
@@ -264,19 +264,19 @@ export const SettingsFlowModal = ({
                   {submitting
                     ? <ActivityIndicator size='small' color='#fff' />
                     : <Text style={styles.helpModalCloseButtonText}>{mode === 'add-source' ? 'Add Source' : 'Update Source'}</Text>}
-                </Pressable>
+                </TouchableOpacity>
 
-                <Pressable
+                <TouchableOpacity
                   style={styles.helpModalCloseButton}
                   onPress={() => setMode('settings')}
                 >
                   <Text style={styles.helpModalCloseButtonText}>Back</Text>
-                </Pressable>
+                </TouchableOpacity>
               </View>
             </>
           )}
         </View>
-      </Pressable>
+      </TouchableOpacity>
     </Modal>
   );
 };

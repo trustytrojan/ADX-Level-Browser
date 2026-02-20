@@ -1,4 +1,4 @@
-import { Alert, Pressable, Text, View } from 'react-native';
+import { Alert, TouchableOpacity, Text, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import type { Source } from '../types';
 
@@ -29,13 +29,13 @@ export const SourcesList = ({ sources, onDelete, onAddPress, onEditPress }: Sour
     <View>
       <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
         <Text style={{ fontSize: 18, fontWeight: '600', color: '#fff' }}>Sources</Text>
-        <Pressable
+        <TouchableOpacity
           style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}
           onPress={onAddPress}
         >
           <Ionicons name='add-circle-outline' size={20} color='#007AFF' />
           <Text style={{ color: '#007AFF', fontSize: 14 }}>Add Source</Text>
-        </Pressable>
+        </TouchableOpacity>
       </View>
 
       {sources.map((source) => (
@@ -60,18 +60,18 @@ export const SourcesList = ({ sources, onDelete, onAddPress, onEditPress }: Sour
             </Text>
           </View>
           <View style={{ flexDirection: 'row', gap: 12 }}>
-            <Pressable
+            <TouchableOpacity
               onPress={() => onEditPress(source)}
               hitSlop={12}
             >
               <Ionicons name='pencil-outline' size={20} color='#007AFF' />
-            </Pressable>
-            <Pressable
+            </TouchableOpacity>
+            <TouchableOpacity
               onPress={() => handleDeletePress(source)}
               hitSlop={12}
             >
               <Ionicons name='trash-outline' size={20} color='#ff6b6b' />
-            </Pressable>
+            </TouchableOpacity>
           </View>
         </View>
       ))}

@@ -1,5 +1,5 @@
 import { StatusBar } from 'expo-status-bar';
-import { ActivityIndicator, AppState, Linking, Pressable, Text, TouchableOpacity, View } from 'react-native';
+import { ActivityIndicator, Linking, TouchableOpacity, Text, View } from 'react-native';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import type { AppSettings, SongItem } from './types';
 import { SearchBar } from './components/SearchBar';
@@ -254,24 +254,24 @@ export default function App() {
         <View style={styles.headerContent}>
           <Text style={styles.headerTitle}>ADX Level Browser</Text>
           <View style={styles.headerRight}>
-            <Pressable
+            <TouchableOpacity
               onPress={() => Linking.openURL('https://github.com/trustytrojan/adx-convert-browser')}
               hitSlop={12}
             >
               <Ionicons name='logo-github' size={24} color='#9aa3b2' />
-            </Pressable>
-            <Pressable
+            </TouchableOpacity>
+            <TouchableOpacity
               onPress={() => setShowSettingsModal(true)}
               hitSlop={12}
             >
               <Ionicons name='settings-outline' size={24} color='#9aa3b2' />
-            </Pressable>
-            <Pressable
+            </TouchableOpacity>
+            <TouchableOpacity
               onPress={() => setShowHelpModal(true)}
               hitSlop={12}
             >
               <Entypo name='help-with-circle' size={24} color='#9aa3b2' />
-            </Pressable>
+            </TouchableOpacity>
           </View>
         </View>
       </View>
