@@ -4,10 +4,10 @@ on:
   workflow_dispatch:
   push:
     branches: [master]
-    paths: ['**.ts', '**.tsx', '*.json', .github/workflows/*.yml]
+    paths: ['**.ts', '**.tsx', '*.json', .github/workflows/build.yml]
   pull_request:
     branches: [master]
-    paths: ['**.ts', '**.tsx', '*.json', .github/workflows/*.yml]
+    paths: ['**.ts', '**.tsx', '*.json', .github/workflows/build.yml]
 
 env:
   PROJECT_NAME: ADXLevels
