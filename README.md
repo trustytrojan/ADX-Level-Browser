@@ -17,7 +17,7 @@ For both **Android and iOS/iPadOS,** you can download the latest build [here](ht
 The `.ipa` files built on GitHub Actions **must be sideloaded.** I personally recommend using [SideStore](https://sidestore.io/); you can read installation instructions on its website.
 
 ### Expo Go
-If for some reason you cannot install the APK/IPA files from above, your last option is to run the app within **Expo Go** ([Play Store](https://play.google.com/store/apps/details?id=host.exp.exponent), [App Store](https://apps.apple.com/us/app/expo-go/id982107779)). I will be hosting a tunneled Expo development server to make this possible. Once you have Expo Go installed, simply scan the QR code below (may not always work, [report](#submitting-bug-reports-and-feature-requests) if broken) with your device's camera app.
+You can also run the app within **Expo Go** ([Play Store](https://play.google.com/store/apps/details?id=host.exp.exponent), [App Store](https://apps.apple.com/us/app/expo-go/id982107779)) to avoid the hassle of sideloading. I will be hosting an Expo development server to make this possible. Once you have Expo Go installed, simply scan the QR code below (may not always work, [report](#submitting-bug-reports-and-feature-requests) if broken) with your device's camera app.
 ```
 █████████████████████████████
 ██ ▄▄▄▄▄ █▀▀ ██▄  ▄█ ▄▄▄▄▄ ██
@@ -36,7 +36,7 @@ If for some reason you cannot install the APK/IPA files from above, your last op
 █████████████████████████████
 ```
 
-**There is one caveat to running in Expo Go,** however. Since Expo Go can't dynamically link to native libraries, the unzipping/zipping process of ADX files has to happen synchronously in pure JavaScript code, which will be a lot slower than native builds. Everything else should function as intended.
+**There is one caveat to running in Expo Go,** however. Since Expo Go can't dynamically link to native libraries, the unzipping/zipping process of ADX files has to happen synchronously in pure JavaScript code, which will be slower than native builds (but it's still not that bad). Everything else should function as intended.
 
 ## Submitting bug reports and feature requests
 [Submit an issue](https://github.com/trustytrojan/ADX-Level-Browser/issues) in this repository, or ping @trustytrojan in the [official AstroDX Discord server](https://discord.gg/6fpETgpvjZ).
