@@ -8,6 +8,12 @@ const SOURCES_FILENAME = 'sources.json';
  */
 const DEFAULT_SOURCES: Source[] = [
   {
+    id: 'converts',
+    name: 'Converts',
+    baseUrl: 'https://api.trustytrojan.dev/adx/converts',
+    enabled: true
+  },
+  {
     id: 'majdata',
     name: 'Majdata.net',
     baseUrl: 'https://majdata.net/api3/api/maichart',

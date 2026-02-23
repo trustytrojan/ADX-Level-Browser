@@ -82,7 +82,7 @@ export const SongElement = memo(<T extends ElementItem = ElementItem>({
           </Text>
           <Text style={[styles.resultSubtext, isSelected && styles.resultSubtextBold]}>
             {displayArtist}
-            {isMajdata && displayDesigner ? `\nDesigned by: ${displayDesigner}` : ''}
+            {displayDesigner ? `\nDesigned by: ${displayDesigner}` : ''}
           </Text>
         </View>
         {rightIcon}
