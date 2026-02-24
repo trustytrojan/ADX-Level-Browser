@@ -51,8 +51,10 @@ jobs:
       - name: Build Xcode workspace
         if: matrix.platform.name == 'iOS'
         run: |
+          set -o pipefail
           cd ios
-          xcodebuild archive \
+          NSUnbufferedIO=YES xcodebuild \
+            archive \
             -workspace $PROJECT_NAME.xcworkspace \
             -scheme $PROJECT_NAME \
             -configuration Release \
@@ -61,7 +63,9 @@ jobs:
             CODE_SIGNING_REQUIRED=NO \
             CODE_SIGN_ENTITLEMENTS="" \
             CODE_SIGNING_METHOD=manual \
-            AD_HOC_CODE_SIGNING_ALLOWED=YES
+            AD_HOC_CODE_SIGNING_ALLOWED=YES \
+            2>&1 \
+            | xcbeautify
 
       - name: Download and run `xcarchive_to_ipa.sh`
         if: matrix.platform.name == 'iOS'

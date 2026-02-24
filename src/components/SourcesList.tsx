@@ -1,4 +1,4 @@
-import { Alert, TouchableOpacity, Text, View } from 'react-native';
+import { Alert, Text, TouchableOpacity, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import type { Source } from '../types';
 

@@ -29,7 +29,7 @@ export async function loadSettings(): Promise<AppSettings> {
 
   if (!settingsFile.exists) {
     // Create default settings file
-    await saveSettings(DEFAULT_SETTINGS);
+    saveSettings(DEFAULT_SETTINGS);
     return DEFAULT_SETTINGS;
   }
 
@@ -48,7 +48,7 @@ export async function loadSettings(): Promise<AppSettings> {
 /**
  * Save app settings to storage
  */
-export async function saveSettings(settings: AppSettings): Promise<void> {
+export function saveSettings(settings: AppSettings) {
   const settingsFile = getSettingsFile();
   const jsonText = JSON.stringify(settings, null, 2);
   settingsFile.write(jsonText);
@@ -63,5 +63,5 @@ export async function updateSetting<K extends keyof AppSettings>(
 ): Promise<void> {
   const settings = await loadSettings();
   settings[key] = value;
-  await saveSettings(settings);
+  saveSettings(settings);
 }

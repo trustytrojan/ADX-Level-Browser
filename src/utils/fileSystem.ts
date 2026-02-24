@@ -29,7 +29,7 @@ export const getFolderForSong = (item: SongItem): Directory => {
   return new Directory(downloadsDir, folderName);
 };
 
-export const clearDownloadCache = async (): Promise<void> => {
+export const clearDownloadCache = () => {
   const downloadsDir = new Directory(Paths.cache, 'adx-downloads');
   try {
     // Delete the entire adx-downloads directory

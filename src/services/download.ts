@@ -1,5 +1,5 @@
 import * as FileSystem from 'expo-file-system/legacy';
-import { Directory, File, Paths } from 'expo-file-system';
+import { Directory, File } from 'expo-file-system';
 import type { Song } from '../types';
 import { unzipFileToFolder, zipFolderToFile } from '../utils/archive';
 import { getChartUrl, getImageUrl, getSource, getTrackUrl, getVideoUrl } from './sources';
@@ -46,7 +46,7 @@ export const downloadSong = async (
     const videoPath = `${songDir.uri}/pv.mp4`;
 
     // Download files in parallel
-    const downloadPromises: Promise<any>[] = [
+    const downloadPromises: Promise<unknown>[] = [
       FileSystem.downloadAsync(trackUrl, trackPath),
       FileSystem.downloadAsync(chartUrl, chartPath),
       FileSystem.downloadAsync(imageUrl, imagePath),

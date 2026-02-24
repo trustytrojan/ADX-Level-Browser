@@ -3,9 +3,10 @@ import { Platform } from 'react-native';
 import Constants, { ExecutionEnvironment } from 'expo-constants';
 
 const loadZipArchiveModule = () => {
-  if (Constants.executionEnvironment === ExecutionEnvironment.StoreClient)
+  if (Constants.executionEnvironment === ExecutionEnvironment.StoreClient) {
     // we are definitely running in Expo Go, and cannot load native modules
     return undefined;
+  }
   return import('react-native-zip-archive');
 };
 
@@ -59,7 +60,7 @@ export const zipFoldersToFile = async (folders: Directory[], outputFile: File): 
   if (zipArchiveModule?.zip) {
     try {
       if (Platform.OS === 'ios') {
-        const originalUris = folders.map(f => f.uri);
+        const originalUris = folders.map((f) => f.uri);
 
         // move the folders into a temp dir for zipping,
         // to trigger https://github.com/mockingbot/react-native-zip-archive/blob/e6b5f63876563b825b942fd38003606dfc3f823a/index.js#L60-L63
@@ -68,16 +69,14 @@ export const zipFoldersToFile = async (folders: Directory[], outputFile: File): 
         // and instead make use of https://github.com/ZipArchive/ZipArchive/blob/acc61be58181e635ae77718e66530b4ee7dea4be/SSZipArchive/SSZipArchive.m#L917
         // awesome 😃
         const tempDir = new Directory(Paths.cache, 'temp_dir_for_zipping');
-        for (const dir of folders) {
+        for (const dir of folders)
           dir.move(new Directory(tempDir, dir.name));
-        }
 
         await zipArchiveModule.zip(tempDir.uri, outputFile.uri);
 
         // move the folders back to their original locations
-        for (let i = 0; i < originalUris.length; ++i) {
+        for (let i = 0; i < originalUris.length; ++i)
           folders[i].move(new Directory(originalUris[i]));
-        }
       } else if (Platform.OS === 'android') {
         // both RNZA and zip4j ensure that folder paths are recursed.
         // no need to worry about it, unlike above.

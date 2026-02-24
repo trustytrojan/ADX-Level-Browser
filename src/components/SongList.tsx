@@ -118,35 +118,32 @@ export const SongList = ({
   );
 
   return (
-    <>
-      {/* <Text style={styles.sectionLabel}>Song List</Text> */}
-      <FlatList
-        ref={listRef}
-        style={styles.songsList}
-        data={songs}
-        keyExtractor={(item) => `${item.sourceId}:${item.id}`}
-        renderItem={renderItem}
-        ListEmptyComponent={!loading && searchText ? <Text style={styles.emptyText}>No songs found</Text> : null}
-        ListFooterComponent={renderFooter}
-        onViewableItemsChanged={viewableItemsChanged.current}
-        viewabilityConfig={viewabilityConfig}
-        onEndReached={handleEndReached}
-        onEndReachedThreshold={0.3}
-        onContentSizeChange={() => {
-          if (refreshing || wasRefreshingRef.current)
-            listRef.current?.scrollToOffset({ offset: 0, animated: false });
-        }}
-        scrollEnabled={!refreshing}
-        removeClippedSubviews={false}
-        refreshControl={
-          <RefreshControl
-            refreshing={refreshing}
-            onRefresh={onRefresh}
-            tintColor='#007AFF'
-            colors={['#007AFF']}
-          />
-        }
-      />
-    </>
+    <FlatList
+      ref={listRef}
+      style={styles.songsList}
+      data={songs}
+      keyExtractor={(item) => `${item.sourceId}:${item.id}`}
+      renderItem={renderItem}
+      ListEmptyComponent={!loading && searchText ? <Text style={styles.emptyText}>No songs found</Text> : null}
+      ListFooterComponent={renderFooter}
+      onViewableItemsChanged={viewableItemsChanged.current}
+      viewabilityConfig={viewabilityConfig}
+      onEndReached={handleEndReached}
+      onEndReachedThreshold={0.3}
+      onContentSizeChange={() => {
+        if (refreshing || wasRefreshingRef.current)
+          listRef.current?.scrollToOffset({ offset: 0, animated: false });
+      }}
+      scrollEnabled={!refreshing}
+      removeClippedSubviews={false}
+      refreshControl={
+        <RefreshControl
+          refreshing={refreshing}
+          onRefresh={onRefresh}
+          tintColor='#007AFF'
+          colors={['#007AFF']}
+        />
+      }
+    />
   );
 };
