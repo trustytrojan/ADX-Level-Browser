@@ -1,4 +1,7 @@
 # ADX Level Browser
+
+[![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/trustytrojan/ADX-Level-Browser)
+
 An [Expo](https://expo.dev) app providing an all-in-one interface for searching, downloading, and importing levels to [AstroDX](https://www.astrodx.com/).
 
 ## Features
