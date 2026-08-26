@@ -71,7 +71,7 @@ export const ReviewSelectionContainer = ({
                 title={displayTitle}
                 subtitle={displayArtist}
                 downloaded={isDownloaded}
-                showRemoveButton={true}
+                showRemoveButton
                 onRemove={() => onRemoveSong(songId)}
                 variant='review'
               />

@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { ActivityIndicator, Modal, TouchableOpacity, ScrollView, Switch, Text, TextInput, View } from 'react-native';
+import { ActivityIndicator, Modal, ScrollView, Switch, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { styles } from '../../styles';
 import { clearDownloadCache } from '../../utils/fileSystem';
 import { addSource, deleteSource, loadSources, updateSource } from '../../services/sources';
@@ -59,7 +59,7 @@ export const SettingsFlowModal = ({
   const handleClearCache = async () => {
     setClearingCache(true);
     try {
-      await clearDownloadCache();
+      clearDownloadCache();
       setCacheCleared(true);
       onCacheCleared();
       setTimeout(() => setCacheCleared(false), 2000);
@@ -129,7 +129,7 @@ export const SettingsFlowModal = ({
     <Modal
       visible={visible}
       animationType='none'
-      transparent={true}
+      transparent
       onRequestClose={onClose}
     >
       <View style={styles.helpModalOverlay}>
@@ -263,7 +263,11 @@ export const SettingsFlowModal = ({
                 >
                   {submitting
                     ? <ActivityIndicator size='small' color='#fff' />
-                    : <Text style={styles.helpModalCloseButtonText}>{mode === 'add-source' ? 'Add Source' : 'Update Source'}</Text>}
+                    : (
+                      <Text style={styles.helpModalCloseButtonText}>
+                        {mode === 'add-source' ? 'Add Source' : 'Update Source'}
+                      </Text>
+                    )}
                 </TouchableOpacity>
 
                 <TouchableOpacity

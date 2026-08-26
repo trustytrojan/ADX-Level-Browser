@@ -11,9 +11,8 @@ export const openWithAstroDX = async (file: File) => {
       flags: 1,
       packageName: 'com.Reflektone.AstroDX',
     });
-  } else if (Platform.OS === 'ios') {
+  } else if (Platform.OS === 'ios')
     await Sharing.shareAsync(file.uri);
-  } else {
+  else
     throw new Error('Unsupported platform');
-  }
 };

@@ -23,41 +23,67 @@ export interface Source {
 
 export interface Song {
   /**
-   * Unique song ID from the source API
-   */
-  id: string;
-  /**
-   * ID of the source this song comes from
+   * Source ID
    */
   sourceId: string;
+
+  /**
+   * Google Drive folder ID, or Majdata ID
+   */
+  id: string;
+
+  /**
+   * Zetaraku `songId`.
+   */
+  zetarakuId: string;
+
   /**
    * Song title
    */
   title: string;
+
   /**
    * Song artist
    */
   artist: string;
+
+  /**
+   * Zetaraku `notesDesigner`, or Majdata `designer`
+   */
+  designer?: string;
+
+  /**
+   * Zetaraku `releaseDate`.
+   */
+  releaseDate: string;
+
+  /**
+   * Array of difficulty levels as strings, with the index indicating the
+   * difficulty name (basic, advanced, expert, master, remaster).
+   * If no chart is available for a diff, the value is falsy.
+   * (This is how Majdata.net provides difficulty level data.)
+   */
+  levels: string[];
+
   /**
    * Romanized title. Not present if `title` does not contain Japanese characters.
    */
   romanizedTitle?: string;
+
   /**
    * Romanized artist. Not present if `artist` does not contain Japanese characters.
    */
   romanizedArtist?: string;
-  /**
-   * Also known as "aliases". Alternative names for the song.
-   */
-  communityNames?: string[];
-  /**
-   * Chart designer name.
-   */
-  designer?: string;
+
   /**
    * Romanized designer. Not present if `designer` does not contain Japanese characters.
    */
   romanizedDesigner?: string;
+
+  /**
+   * Also known as "aliases". Sourced from [GCM-Bot](https://github.com/lomotos10/GCM-bot/blob/main/data/aliases/en/maimai.tsv).
+   */
+  communityNames?: string[];
 }
 
 // Type alias used throughout the codebase
